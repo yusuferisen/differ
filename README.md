@@ -48,33 +48,33 @@ Controls how text is divided into units before diffing. Toggle with the mode but
 
 | Toggle | What it does | Default |
 |---|---|---|
-| **char mode** | Character-level highlighting instead of word-level within each changed pair | Off |
-| **fuzzy matching** | Pairs segments by similarity instead of position — handles insertions in the middle correctly | Off |
+| **character-level** | Character-level highlighting instead of word-level within each changed pair | Off |
+| **smart matching** | Pairs sections by similarity instead of position — handles insertions in the middle correctly | Off |
 | **ignore case** | Treats upper/lowercase as equal for matching and highlighting | **On** |
-| **ignore ws** | Normalizes whitespace before comparison | Off |
-| **show all / changed only** | Toggle equal rows in the diff output — hides unchanged segments to focus on changes | Changed only |
+| **ignore spacing** | Normalizes whitespace before comparison | Off |
+| **show all / changed only** | Toggle unchanged rows in the diff output — hides unchanged sections to focus on changes | Changed only |
 
 ### Merge mode
 
-Activated automatically on the first tap of any highlighted word or `«`/`»` button.
+Activated automatically on the first click of any highlighted word or `«`/`»` button.
 
-- **Tap a highlighted word** on either side → accept that version for that diff chunk
-- **Tap the other side** of the same chunk → flip the decision
-- **Tap the same side again** → unset (back to unresolved)
-- **`«` / `»`** buttons (hover any changed, removed, or added row) → accept the entire row left or right in one action; click again to unset
-- **Removed/added rows** are also interactive — click or use `«`/`»` to keep or exclude a segment that only exists on one side
+- **Click a highlighted word** on either side → choose that version for that diff chunk
+- **Click the other side** of the same chunk → flip the decision
+- **Click the same side again** → unset (back to undecided)
+- **`«` / `»`** buttons (hover any changed, removed, or added row) → choose the entire row left or right in one action; click again to unset
+- **Removed/added rows** are also interactive — click or use `«`/`»` to keep or exclude a section that only exists on one side
 - **Undo** button (up to 20 steps, batch row-accept = 1 step)
 - Switching split modes preserves merge decisions per mode — switching back restores them
 
-### Merge result panel
+### Final version panel
 
 Appears at the bottom on the first merge action.
 
 - Live-updating assembled text using mode-appropriate delimiters (spaces between sentences/clauses, blank lines between paragraphs, newlines between lines)
-- **Unresolved chunks**: `{old|new}` inline (amber) if short ≤80 chars, or a two-line block with `← old` / `→ new` each clickable for long chunks
-- Removed/added segments are included by default; exclude them via the diff table
+- **Undecided chunks**: `{old|new}` inline (amber) if short ≤80 chars, or a two-line block with `← old` / `→ new` each clickable for long chunks
+- Removed/added sections are included by default; exclude them via the diff table
 - Block-format conflicts can also be resolved directly in the panel
-- **Copy** — always available; includes `{old|new}` placeholders for unresolved chunks. Button flashes green on copy.
+- **Copy** — always available; includes `{old|new}` placeholders for undecided chunks. Button flashes green on copy.
 
 ### Themes
 
@@ -99,16 +99,16 @@ The URL hash updates automatically as you work, encoding the full session:
 
 - Both text boxes
 - Split mode
-- All toggle states (fuzzy, char mode, ignore case, ignore ws)
+- All toggle states (smart matching, character-level, ignore case, ignore spacing)
 - All merge decisions
 
-Click **link** in the toolbar to copy the current URL. Anyone opening it sees the exact same diff and merge state. If the encoded state exceeds ~8KB the button shows e.g. `9.2KB > 8KB max` instead.
+Click **share link** in the toolbar to copy the current URL. Anyone opening it sees the exact same diff and merge state. If the encoded state exceeds ~8KB the button shows "too long to share" instead.
 
 ### Stats
 
 - Each input box: live word count and character count
-- Diff output: total segments · changed · equal
-- Merge panel: count of unresolved chunks
+- Diff output: total sections · changed · unchanged
+- Final version panel: count of undecided chunks
 
 ---
 
@@ -233,10 +233,7 @@ CDN links load compromise.js and jsdiff from unpkg. For offline use, both need t
 See [todo.md](todo.md). Remaining items:
 
 **UI / UX**
-- Persist user preferences (split mode, toggle states) in localStorage
 - Settings/Advanced panel to hide technical options from non-technical users
-- Show changed rows only / show all toggle (default: changed only — important for long documents)
-- Plain-language copy throughout ("5 decisions remaining" not "5 unresolved", "final draft" not "merge result")
 
 **Research**
 - Investigate semantic change classification using compromise.js (already loaded): label diff chunks by what kind of thing changed — number, date, name, sentiment, etc.

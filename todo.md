@@ -33,7 +33,7 @@
 - [x] Persist user preferences in localStorage: split mode, fuzzy, char mode, ignore case, ignore ws (theme already persists); URL hash takes precedence when present
 - [ ] "Settings" / "Advanced" collapsed button group — hide fuzzy matching, char mode, ignore case, ignore ws behind a toggle to reduce visual noise for non-technical users; on mobile use a sheet/drawer
 - [x] Show changed rows only / show all toggle in toolbar (default: changed only); important for long documents like CVs where equal rows dominate
-- [ ] Plain-language UI copy: "5 decisions remaining" not "5 unresolved", "final draft" not "merge result", "compare" not "diff", review all technical labels for general-audience friendliness
+- [x] Plain-language UI copy: "5 to decide" not "5 unresolved", "final version" not "merge result", "smart matching" not "fuzzy matching", "sections" not "segments", review all technical labels for general-audience friendliness
 
 ## Themes
 - [x] Theme picker: auto/light/dark + named themes (nord, solarized dark, dracula, github) via dropdown button

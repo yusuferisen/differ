@@ -542,7 +542,7 @@
 
 <header>
   <h1>differ</h1>
-  <span class="hint" id="hint">alt+M: cycle mode</span>
+  <span class="hint" id="hint">alt+M: switch mode</span>
   <div class="mode-group" id="mode-group">
     <button class="mode-btn" data-mode="paragraph">paragraph</button>
     <button class="mode-btn active" data-mode="sentence">sentence</button>
@@ -550,11 +550,11 @@
     <button class="mode-btn" data-mode="line">line</button>
   </div>
   <div class="header-sep"></div>
-  <button class="fuzzy-btn" id="char-btn">char mode</button>
-  <button class="fuzzy-btn" id="fuzzy-btn">fuzzy matching</button>
+  <button class="fuzzy-btn" id="char-btn">character-level</button>
+  <button class="fuzzy-btn" id="fuzzy-btn">smart matching</button>
   <div class="header-sep"></div>
   <button class="fuzzy-btn active" id="ignore-case-btn">ignore case</button>
-  <button class="fuzzy-btn" id="ignore-ws-btn">ignore ws</button>
+  <button class="fuzzy-btn" id="ignore-ws-btn">ignore spacing</button>
   <div class="header-sep"></div>
   <div class="theme-picker" id="theme-picker">
     <button class="fuzzy-btn" id="theme-btn">theme</button>
@@ -600,7 +600,7 @@ Organizers recommend arriving before noon to secure a good spot near the main st
 <div class="toolbar">
   <span class="stats" id="stats"></span>
   <button class="fuzzy-btn" id="toggle-equal-btn">show all</button>
-  <button class="share-btn" id="share-btn">link</button>
+  <button class="share-btn" id="share-btn">share link</button>
 </div>
 
 <div id="diff-output">
@@ -609,7 +609,7 @@ Organizers recommend arriving before noon to secure a good spot near the main st
 
 <div id="merge-panel" style="display:none">
   <div class="merge-panel-header">
-    <span class="merge-panel-title">merge result</span>
+    <span class="merge-panel-title">final version</span>
     <span class="merge-unresolved-badge" id="unresolved-badge"></span>
     <button class="merge-undo-btn" id="undo-btn" style="display:none">↩ undo</button>
     <button class="merge-copy-btn" id="copy-btn">copy</button>
@@ -629,7 +629,7 @@ function updateInputStats(id, text) {
   const words = wordCount(text);
   const chars = text.length;
   document.getElementById(id).textContent =
-    words ? `${words} words · ${chars} chars` : '';
+    words ? `${words} words · ${chars} characters` : '';
 }
 
 // ---------------------------------------------------------------------------
@@ -1045,7 +1045,7 @@ function renderDiff(rows) {
   output.innerHTML = '';
 
   if (rows.length === 0) {
-    output.innerHTML = '<div class="placeholder">No segments found — try a different split mode.</div>';
+    output.innerHTML = '<div class="placeholder">No sections found — try a different mode.</div>';
     stats.textContent = '';
     applyHideEqual(0);
     return;
@@ -1055,13 +1055,13 @@ function renderDiff(rows) {
 
   if (changedCount === 0) {
     output.innerHTML = '<div class="identical-notice">✓ texts are identical</div>';
-    stats.textContent = `${rows.length} segments · identical`;
+    stats.textContent = `${rows.length} sections · identical`;
     applyHideEqual(0);
     return;
   }
 
   stats.textContent =
-    `${rows.length} segments · ${changedCount} changed · ${rows.length - changedCount} equal`;
+    `${rows.length} sections · ${changedCount} changed · ${rows.length - changedCount} unchanged`;
 
   // Sticky column headers
   const colHeader = document.createElement('div');
@@ -1074,7 +1074,7 @@ function renderDiff(rows) {
   const hint = document.createElement('div');
   hint.className = 'merge-hint';
   hint.id = 'merge-hint';
-  hint.textContent = 'tap any highlighted word to accept that version · use « » to accept an entire row';
+  hint.textContent = 'click any highlighted word to choose that version · use « » to choose an entire row';
   output.appendChild(hint);
 
   for (const row of rows) {
@@ -1332,7 +1332,7 @@ function updateMergePanel() {
   }
 
   document.getElementById('unresolved-badge').textContent =
-    unresolvedCount > 0 ? `${unresolvedCount} unresolved` : '';
+    unresolvedCount > 0 ? `${unresolvedCount} to decide` : '';
   document.getElementById('undo-btn').style.display =
     undoStack.length > 0 ? '' : 'none';
 }
@@ -1460,7 +1460,7 @@ function compare() {
   try {
     rows = computeDiff(segs1, segs2, fuzzyEnabled);
   } catch {
-    output.innerHTML = '<div class="placeholder">Failed to compute diff — the diff library may not have loaded. Try refreshing.</div>';
+    output.innerHTML = '<div class="placeholder">Something went wrong — try refreshing the page.</div>';
     stats.textContent = '';
     resetMergeState();
     return;
@@ -1552,13 +1552,13 @@ document.getElementById('share-btn').addEventListener('click', () => {
   const btn = document.getElementById('share-btn');
 
   if (('#' + encoded).length >= 8000) {
-    const kb = (('#' + encoded).length / 1024).toFixed(1);
-    btn.textContent = `${kb}KB > 8KB max`;
-    setTimeout(() => { btn.textContent = 'link'; }, 2500);
+    const len = Math.round(('#' + encoded).length / 100) * 100;
+    btn.textContent = `too long to share (${len.toLocaleString()} / 8,000 characters)`;
+    setTimeout(() => { btn.textContent = 'share link'; }, 3500);
     return;
   }
 
-  const flash = msg => { btn.textContent = msg; setTimeout(() => { btn.textContent = 'link'; }, 1500); };
+  const flash = msg => { btn.textContent = msg; setTimeout(() => { btn.textContent = 'share link'; }, 1500); };
   navigator.clipboard.writeText(url).then(() => flash('copied!')).catch(() => {
     const ta = Object.assign(document.createElement('textarea'), { value: url });
     document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
