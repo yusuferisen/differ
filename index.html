@@ -376,11 +376,23 @@
       height: 240px;
       display: flex;
       flex-direction: column;
-      border-top: 2px solid var(--border);
       background: var(--bg-panel);
       position: sticky;
       bottom: 0;
       z-index: 2;
+    }
+
+    .merge-resize-handle {
+      height: 5px;
+      cursor: ns-resize;
+      background: transparent;
+      flex-shrink: 0;
+      border-top: 2px solid var(--border);
+    }
+    .merge-resize-handle:hover,
+    .merge-resize-handle.dragging {
+      background: var(--accent);
+      opacity: 0.5;
     }
 
     .merge-panel-header {
@@ -763,6 +775,7 @@
 </div>
 
 <div id="merge-panel">
+  <div class="merge-resize-handle" id="merge-resize-handle"></div>
   <div class="merge-panel-header">
     <span class="merge-panel-title">final version</span>
     <span class="merge-unresolved-badge" id="unresolved-badge"></span>
@@ -1617,6 +1630,59 @@ document.getElementById('copy-btn').addEventListener('click', () => {
     confirm();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Merge panel resize handle
+// ---------------------------------------------------------------------------
+(function() {
+  const handle = document.getElementById('merge-resize-handle');
+  const panel  = document.getElementById('merge-panel');
+  const MIN_H  = 100;
+  const MAX_PCT = 0.8;
+  let startY, startH;
+
+  function onMove(clientY) {
+    const delta = startY - clientY;
+    const maxH  = window.innerHeight * MAX_PCT;
+    panel.style.height = Math.min(maxH, Math.max(MIN_H, startH + delta)) + 'px';
+  }
+
+  function onEnd() {
+    handle.classList.remove('dragging');
+    document.body.style.userSelect = '';
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    document.removeEventListener('touchmove', onTouchMove);
+    document.removeEventListener('touchend', onEnd);
+    localStorage.setItem('differ-merge-height', panel.style.height);
+  }
+
+  function onMouseMove(e) { onMove(e.clientY); }
+  function onMouseUp() { onEnd(); }
+  function onTouchMove(e) { onMove(e.touches[0].clientY); e.preventDefault(); }
+
+  handle.addEventListener('mousedown', e => {
+    startY = e.clientY;
+    startH = panel.offsetHeight;
+    handle.classList.add('dragging');
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
+
+  handle.addEventListener('touchstart', e => {
+    startY = e.touches[0].clientY;
+    startH = panel.offsetHeight;
+    handle.classList.add('dragging');
+    document.body.style.userSelect = 'none';
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', onEnd);
+  });
+
+  // Restore saved height
+  const saved = localStorage.getItem('differ-merge-height');
+  if (saved) panel.style.height = saved;
+})();
 
 // ---------------------------------------------------------------------------
 // Compare action

@@ -71,13 +71,13 @@ Activated automatically on the first click of any highlighted word or `«`/`»` 
 
 ### Final version panel
 
-Appears at the bottom on the first merge action.
+Always visible at the bottom of the page, sticky while scrolling. The top edge is a drag handle — resize the panel vertically by dragging. Height persists across reloads.
 
 - Live-updating assembled text using mode-appropriate delimiters (spaces between sentences/clauses, blank lines between paragraphs, newlines between lines)
 - **Undecided chunks**: `{old|new}` inline (amber) if short ≤80 chars, or a two-line block with `← old` / `→ new` each clickable for long chunks
 - Removed/added sections are included by default; exclude them via the diff table
 - Block-format conflicts can also be resolved directly in the panel
-- **Copy** — always available; includes `{old|new}` placeholders for undecided chunks. Button flashes green on copy.
+- **Copy** — appears when a diff is active; includes `{old|new}` placeholders for undecided chunks. Button flashes green on copy.
 
 ### Themes
 
@@ -230,11 +230,12 @@ differ/
 ├── icon-512.png            # app icon 512×512
 ├── icon-maskable-512.png   # app icon (maskable, Android adaptive)
 ├── icon-maskable.svg       # maskable icon (vector)
+├── samples.js              # sample text pairs (loaded with ?samples param)
 ├── todo.md                 # feature roadmap
 └── README.md               # this file
 ```
 
-Open `index.html` directly in a browser. Sample text is preloaded. No build step, no server needed. For PWA install (Add to Home Screen), serve via `localhost` or HTTPS.
+Open `index.html` directly in a browser. No build step, no server needed. Add `?samples` to the URL to load a dropdown with sample text pairs for testing. For PWA install (Add to Home Screen), serve via `localhost` or HTTPS.
 
 ---
 
