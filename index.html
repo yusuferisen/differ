@@ -262,6 +262,7 @@
 
     .diff-row.equal { opacity: 0.45; }
     .diff-row.equal:hover { opacity: 1; }
+    #diff-output.hide-equal .diff-row.equal { display: none; }
 
     .diff-cell {
       flex: 1;
@@ -598,6 +599,7 @@ Organizers recommend arriving before noon to secure a good spot near the main st
 
 <div class="toolbar">
   <span class="stats" id="stats"></span>
+  <button class="fuzzy-btn" id="toggle-equal-btn">show all</button>
   <button class="share-btn" id="share-btn">link</button>
 </div>
 
@@ -648,6 +650,7 @@ let fuzzyEnabled = loadPref('fuzzy', false);
 let charEnabled  = loadPref('char', false);
 let ignoreCase   = loadPref('ignoreCase', true);
 let ignoreWS     = loadPref('ignoreWS', false);
+let hideEqual    = loadPref('hideEqual', true);
 
 // Merge state
 let currentRows      = [];
@@ -736,6 +739,20 @@ document.addEventListener('keydown', e => {
     const next  = modes[(modes.indexOf(currentMode) + 1) % modes.length];
     document.querySelector(`[data-mode="${next}"]`).click();
   }
+});
+
+// Show/hide equal rows
+function applyHideEqual(equalCount) {
+  document.getElementById('diff-output').classList.toggle('hide-equal', hideEqual);
+  const btn = document.getElementById('toggle-equal-btn');
+  btn.textContent = hideEqual ? 'show all' : 'changed only';
+  if (equalCount !== undefined) btn.style.display = equalCount > 0 ? '' : 'none';
+}
+
+document.getElementById('toggle-equal-btn').addEventListener('click', () => {
+  hideEqual = !hideEqual;
+  savePref('hideEqual', hideEqual);
+  applyHideEqual();
 });
 
 // ---------------------------------------------------------------------------
@@ -1030,6 +1047,7 @@ function renderDiff(rows) {
   if (rows.length === 0) {
     output.innerHTML = '<div class="placeholder">No segments found — try a different split mode.</div>';
     stats.textContent = '';
+    applyHideEqual(0);
     return;
   }
 
@@ -1038,6 +1056,7 @@ function renderDiff(rows) {
   if (changedCount === 0) {
     output.innerHTML = '<div class="identical-notice">✓ texts are identical</div>';
     stats.textContent = `${rows.length} segments · identical`;
+    applyHideEqual(0);
     return;
   }
 
@@ -1085,6 +1104,7 @@ function renderDiff(rows) {
 
     output.appendChild(div);
   }
+  applyHideEqual(rows.length - changedCount);
 }
 
 // ---------------------------------------------------------------------------
@@ -1429,6 +1449,7 @@ function compare() {
   if (!oldText.trim() || !newText.trim()) {
     output.innerHTML = '<div class="placeholder">Paste text in both boxes above</div>';
     stats.textContent = '';
+    applyHideEqual(0);
     resetMergeState();
     return;
   }

@@ -52,6 +52,7 @@ Controls how text is divided into units before diffing. Toggle with the mode but
 | **fuzzy matching** | Pairs segments by similarity instead of position — handles insertions in the middle correctly | Off |
 | **ignore case** | Treats upper/lowercase as equal for matching and highlighting | **On** |
 | **ignore ws** | Normalizes whitespace before comparison | Off |
+| **show all / changed only** | Toggle equal rows in the diff output — hides unchanged segments to focus on changes | Changed only |
 
 ### Merge mode
 

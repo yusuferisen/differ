@@ -32,7 +32,7 @@
 - [x] Keyboard shortcut to cycle split modes (Alt+M)
 - [x] Persist user preferences in localStorage: split mode, fuzzy, char mode, ignore case, ignore ws (theme already persists); URL hash takes precedence when present
 - [ ] "Settings" / "Advanced" collapsed button group — hide fuzzy matching, char mode, ignore case, ignore ws behind a toggle to reduce visual noise for non-technical users; on mobile use a sheet/drawer
-- [ ] Show changed rows only / show all toggle on diff table header (default: changed only); important for long documents like CVs where equal rows dominate
+- [x] Show changed rows only / show all toggle in toolbar (default: changed only); important for long documents like CVs where equal rows dominate
 - [ ] Plain-language UI copy: "5 decisions remaining" not "5 unresolved", "final draft" not "merge result", "compare" not "diff", review all technical labels for general-audience friendliness
 
 ## Themes
