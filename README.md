@@ -46,13 +46,16 @@ Controls how text is divided into units before diffing. Toggle with the mode but
 
 ### Diff options
 
+The **options** dropdown in the header contains comparison and normalization settings. The button highlights when any non-default setting is active.
+
 | Toggle | What it does | Default |
 |---|---|---|
 | **character-level** | Character-level highlighting instead of word-level within each changed pair | Off |
 | **smart matching** | Pairs sections by similarity instead of position — handles insertions in the middle correctly | Off |
 | **ignore case** | Treats upper/lowercase as equal for matching and highlighting | **On** |
 | **ignore spacing** | Normalizes whitespace before comparison | Off |
-| **show all / changed only** | Toggle unchanged rows in the diff output — hides unchanged sections to focus on changes | Changed only |
+
+The **show all / changed only** button in the toolbar toggles unchanged rows in the diff output — hides unchanged sections to focus on changes. Default: changed only.
 
 ### Merge mode
 

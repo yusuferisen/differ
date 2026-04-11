@@ -31,7 +31,7 @@
 - [x] Ignore case toggle (on by default)
 - [x] Keyboard shortcut to cycle split modes (Alt+M)
 - [x] Persist user preferences in localStorage: split mode, fuzzy, char mode, ignore case, ignore ws (theme already persists); URL hash takes precedence when present
-- [ ] "Settings" / "Advanced" collapsed button group — hide fuzzy matching, char mode, ignore case, ignore ws behind a toggle to reduce visual noise for non-technical users; on mobile use a sheet/drawer
+- [x] "Options" dropdown — hide smart matching, character-level, ignore case, ignore spacing behind a dropdown menu to reduce visual noise; reuses theme picker dropdown pattern; options button shows active indicator when non-default settings are on
 - [x] Show changed rows only / show all toggle in toolbar (default: changed only); important for long documents like CVs where equal rows dominate
 - [x] Plain-language UI copy: "5 to decide" not "5 unresolved", "final version" not "merge result", "smart matching" not "fuzzy matching", "sections" not "segments", review all technical labels for general-audience friendliness
 

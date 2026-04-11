@@ -473,6 +473,21 @@
     .mcb-right { background: var(--bg-new); color: var(--color-new); }
     .mcb-left:hover, .mcb-right:hover { opacity: 0.8; }
 
+    /* ── Options picker ── */
+    .options-picker { position: relative; }
+    .options-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px;
+      min-width: 160px;
+      z-index: 100;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+
     /* ── Theme picker ── */
     .theme-picker { position: relative; }
 
@@ -521,6 +536,7 @@
 
     .theme-option:hover { background: var(--border); }
 
+    .theme-option.selected::before { content: '✓ '; }
     .theme-option.selected {
       color: var(--accent);
       font-weight: 600;
@@ -550,14 +566,20 @@
     <button class="mode-btn" data-mode="line">line</button>
   </div>
   <div class="header-sep"></div>
-  <button class="fuzzy-btn" id="char-btn">character-level</button>
-  <button class="fuzzy-btn" id="fuzzy-btn">smart matching</button>
-  <div class="header-sep"></div>
-  <button class="fuzzy-btn active" id="ignore-case-btn">ignore case</button>
-  <button class="fuzzy-btn" id="ignore-ws-btn">ignore spacing</button>
-  <div class="header-sep"></div>
+  <div class="options-picker" id="options-picker">
+    <button class="fuzzy-btn" id="options-btn">options ▾</button>
+    <div class="options-dropdown" id="options-dropdown" hidden>
+      <div class="theme-section-label">comparison</div>
+      <button class="theme-option" id="char-btn">character-level</button>
+      <button class="theme-option" id="fuzzy-btn">smart matching</button>
+      <div class="theme-divider"></div>
+      <div class="theme-section-label">normalization</div>
+      <button class="theme-option" id="ignore-case-btn">ignore case</button>
+      <button class="theme-option" id="ignore-ws-btn">ignore spacing</button>
+    </div>
+  </div>
   <div class="theme-picker" id="theme-picker">
-    <button class="fuzzy-btn" id="theme-btn">theme</button>
+    <button class="fuzzy-btn" id="theme-btn">theme ▾</button>
     <div class="theme-dropdown" id="theme-dropdown" hidden>
       <div class="theme-section-label">appearance</div>
       <button class="theme-option" data-theme="auto">auto</button>
@@ -696,39 +718,60 @@ document.getElementById('mode-group').addEventListener('click', e => {
 const charBtn = document.getElementById('char-btn');
 charBtn.addEventListener('click', () => {
   charEnabled = !charEnabled;
-  charBtn.classList.toggle('active', charEnabled);
+  charBtn.classList.toggle('selected', charEnabled);
   savePref('char', charEnabled);
   savedMergeStates = {};
   compare();
   updateHash();
+  updateOptionsIndicator();
 });
 
 const fuzzyBtn = document.getElementById('fuzzy-btn');
 fuzzyBtn.addEventListener('click', () => {
   fuzzyEnabled = !fuzzyEnabled;
-  fuzzyBtn.classList.toggle('active', fuzzyEnabled);
+  fuzzyBtn.classList.toggle('selected', fuzzyEnabled);
   savePref('fuzzy', fuzzyEnabled);
   savedMergeStates = {};
   compare();
   updateHash();
+  updateOptionsIndicator();
 });
 
 document.getElementById('ignore-case-btn').addEventListener('click', function() {
   ignoreCase = !ignoreCase;
-  this.classList.toggle('active', ignoreCase);
+  this.classList.toggle('selected', ignoreCase);
   savePref('ignoreCase', ignoreCase);
   savedMergeStates = {};
   compare();
   updateHash();
+  updateOptionsIndicator();
 });
 
 document.getElementById('ignore-ws-btn').addEventListener('click', function() {
   ignoreWS = !ignoreWS;
-  this.classList.toggle('active', ignoreWS);
+  this.classList.toggle('selected', ignoreWS);
   savePref('ignoreWS', ignoreWS);
   savedMergeStates = {};
   compare();
   updateHash();
+  updateOptionsIndicator();
+});
+
+// Options dropdown
+function updateOptionsIndicator() {
+  const nonDefault = charEnabled || fuzzyEnabled || !ignoreCase || ignoreWS;
+  document.getElementById('options-btn').classList.toggle('active', nonDefault);
+}
+
+const optionsBtn = document.getElementById('options-btn');
+const optionsDropdown = document.getElementById('options-dropdown');
+
+optionsBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  optionsDropdown.hidden = !optionsDropdown.hidden;
+  optionsBtn.textContent = optionsDropdown.hidden ? 'options ▾' : 'options ▴';
+  document.getElementById('theme-dropdown').hidden = true;
+  document.getElementById('theme-btn').textContent = 'theme ▾';
 });
 
 // Keyboard: Alt+M cycles split modes
@@ -1655,7 +1698,7 @@ function applyTheme(name) {
   Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
 
   // Update selected state in dropdown
-  document.querySelectorAll('.theme-option').forEach(btn => {
+  document.querySelectorAll('#theme-dropdown .theme-option').forEach(btn => {
     btn.classList.toggle('selected', btn.dataset.theme === name);
   });
 }
@@ -1671,6 +1714,9 @@ const themeDropdown = document.getElementById('theme-dropdown');
 themeBtn.addEventListener('click', e => {
   e.stopPropagation();
   themeDropdown.hidden = !themeDropdown.hidden;
+  themeBtn.textContent = themeDropdown.hidden ? 'theme ▾' : 'theme ▴';
+  optionsDropdown.hidden = true;
+  optionsBtn.textContent = 'options ▾';
 });
 
 themeDropdown.addEventListener('click', e => {
@@ -1678,19 +1724,28 @@ themeDropdown.addEventListener('click', e => {
   if (!opt) return;
   applyTheme(opt.dataset.theme);
   themeDropdown.hidden = true;
+  themeBtn.textContent = 'theme ▾';
 });
 
 document.addEventListener('click', e => {
-  if (!e.target.closest('#theme-picker')) themeDropdown.hidden = true;
+  if (!e.target.closest('#theme-picker')) {
+    themeDropdown.hidden = true;
+    themeBtn.textContent = 'theme ▾';
+  }
+  if (!e.target.closest('#options-picker')) {
+    optionsDropdown.hidden = true;
+    optionsBtn.textContent = 'options ▾';
+  }
 });
 
 // Apply saved preferences to button states on load
 document.querySelectorAll('.mode-btn').forEach(b =>
   b.classList.toggle('active', b.dataset.mode === currentMode));
-document.getElementById('fuzzy-btn').classList.toggle('active', fuzzyEnabled);
-document.getElementById('char-btn').classList.toggle('active', charEnabled);
-document.getElementById('ignore-case-btn').classList.toggle('active', ignoreCase);
-document.getElementById('ignore-ws-btn').classList.toggle('active', ignoreWS);
+document.getElementById('fuzzy-btn').classList.toggle('selected', fuzzyEnabled);
+document.getElementById('char-btn').classList.toggle('selected', charEnabled);
+document.getElementById('ignore-case-btn').classList.toggle('selected', ignoreCase);
+document.getElementById('ignore-ws-btn').classList.toggle('selected', ignoreWS);
+updateOptionsIndicator();
 
 // Apply saved theme on load
 applyTheme(currentTheme);
@@ -1712,20 +1767,21 @@ if (fromHash) {
   // Restore toggle states
   if (typeof fromHash.fz === 'boolean') {
     fuzzyEnabled = fromHash.fz;
-    document.getElementById('fuzzy-btn').classList.toggle('active', fuzzyEnabled);
+    document.getElementById('fuzzy-btn').classList.toggle('selected', fuzzyEnabled);
   }
   if (typeof fromHash.ch === 'boolean') {
     charEnabled = fromHash.ch;
-    document.getElementById('char-btn').classList.toggle('active', charEnabled);
+    document.getElementById('char-btn').classList.toggle('selected', charEnabled);
   }
   if (typeof fromHash.ic === 'boolean') {
     ignoreCase = fromHash.ic;
-    document.getElementById('ignore-case-btn').classList.toggle('active', ignoreCase);
+    document.getElementById('ignore-case-btn').classList.toggle('selected', ignoreCase);
   }
   if (typeof fromHash.iw === 'boolean') {
     ignoreWS = fromHash.iw;
-    document.getElementById('ignore-ws-btn').classList.toggle('active', ignoreWS);
+    document.getElementById('ignore-ws-btn').classList.toggle('selected', ignoreWS);
   }
+  updateOptionsIndicator();
 }
 
 updateInputStats('stats-old', textOld.value);
