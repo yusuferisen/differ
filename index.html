@@ -373,11 +373,14 @@
     /* ── Merge panel ── */
     #merge-panel {
       flex-shrink: 0;
-      height: 180px;
+      height: 240px;
       display: flex;
       flex-direction: column;
       border-top: 2px solid var(--border);
       background: var(--bg-panel);
+      position: sticky;
+      bottom: 0;
+      z-index: 2;
     }
 
     .merge-panel-header {
@@ -477,6 +480,21 @@
     .mcb-left  { background: var(--bg-old); color: var(--color-old); border-bottom: 1px solid var(--amber-border); }
     .mcb-right { background: var(--bg-new); color: var(--color-new); }
     .mcb-left:hover, .mcb-right:hover { opacity: 0.8; }
+
+    /* ── Samples picker (shown with ?samples param) ── */
+    .samples-picker { position: relative; }
+    .samples-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px;
+      min-width: 180px;
+      z-index: 100;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
 
     /* ── Options picker ── */
     .options-picker { position: relative; }
@@ -664,14 +682,14 @@
       .merge-hint { font-size: 12px; padding: 10px; }
 
       /* Merge panel */
-      #merge-panel { height: 200px; }
+      #merge-panel { height: 220px; }
       .merge-panel-header { padding: 8px 10px; gap: 6px; flex-wrap: wrap; }
       .merge-undo-btn, .merge-copy-btn { min-height: 44px; padding: 6px 12px; font-size: 13px; }
       #merge-text { font-size: 14px; padding: 10px; }
       .mcb-left, .mcb-right { padding: 8px 12px; font-size: 13px; min-height: 44px; }
 
       /* Dropdowns — larger touch targets */
-      .options-dropdown, .theme-dropdown { min-width: 200px; }
+      .samples-dropdown, .options-dropdown, .theme-dropdown { min-width: 200px; }
       .theme-option { padding: 10px 12px; font-size: 14px; }
       .theme-section-label { font-size: 10px; padding: 8px 8px 4px; }
     }
@@ -726,48 +744,40 @@
 <div class="inputs">
   <div class="input-panel">
     <div class="input-label old">Original<span class="input-stats" id="stats-old"></span></div>
-    <textarea id="text-old" spellcheck="false">The annual Harlow Bridge festival draws thousands of visitors each summer.
-Local musicians perform on three open-air stages throughout the weekend.
-The event began in 1987 as a small community gathering and has since grown into one of the region's most celebrated traditions.
-
-Tickets for adults are priced at twenty dollars, with children under twelve admitted free.
-Parking is available at the riverside lot on Mill Street.
-Organizers recommend arriving before noon to secure a good spot near the main stage.</textarea>
+    <textarea id="text-old" spellcheck="false"></textarea>
   </div>
   <div class="input-panel">
     <div class="input-label new">Modified<span class="input-stats" id="stats-new"></span></div>
-    <textarea id="text-new" spellcheck="false">The annual Harlow Bridge festival draws thousands of visitors each spring.
-Local musicians and artists perform on four open-air stages throughout the weekend.
-The event began in 1992 as a small community gathering and has since grown into one of the region's most beloved traditions.
-
-Tickets for adults are priced at twenty-five dollars, with children under ten admitted free.
-Parking is available at the riverside lot on Oak Street.
-Food vendors and craft stalls line the waterfront.
-Organizers recommend arriving before noon to secure a good spot near the main stage.</textarea>
+    <textarea id="text-new" spellcheck="false"></textarea>
   </div>
 </div>
 
 <div class="toolbar">
   <span class="stats" id="stats"></span>
-  <button class="fuzzy-btn" id="toggle-equal-btn">show all</button>
-  <button class="share-btn" id="share-btn">share link</button>
+  <button class="fuzzy-btn" id="toggle-equal-btn" style="display:none">show all</button>
+  <button class="share-btn" id="share-btn" style="display:none">share link</button>
 </div>
 
 <div id="diff-output">
-  <div class="placeholder">Paste text in both boxes above</div>
+  <div class="placeholder">Insert text in the boxes above to start comparing</div>
 </div>
 
-<div id="merge-panel" style="display:none">
+<div id="merge-panel">
   <div class="merge-panel-header">
     <span class="merge-panel-title">final version</span>
     <span class="merge-unresolved-badge" id="unresolved-badge"></span>
     <button class="merge-undo-btn" id="undo-btn" style="display:none">↩ undo</button>
-    <button class="merge-copy-btn" id="copy-btn">copy</button>
+    <button class="merge-copy-btn" id="copy-btn" style="display:none">copy</button>
   </div>
   <div id="merge-text"></div>
 </div>
 
 <script>
+// ---------------------------------------------------------------------------
+// Feature flags (query parameters)
+// ---------------------------------------------------------------------------
+const SHOW_SAMPLES = new URLSearchParams(location.search).has('samples');
+
 // ---------------------------------------------------------------------------
 // Input stats
 // ---------------------------------------------------------------------------
@@ -836,7 +846,6 @@ document.getElementById('mode-group').addEventListener('click', e => {
     undoStack   = saved.undoStack;
     mergeActive = true;
     hideMergeHint();
-    document.getElementById('merge-panel').style.display = 'flex';
     reapplyMergeVisuals();
     updateMergePanel();
   }
@@ -900,6 +909,7 @@ optionsBtn.addEventListener('click', e => {
   optionsBtn.textContent = optionsDropdown.hidden ? 'options ▾' : 'options ▴';
   document.getElementById('theme-dropdown').hidden = true;
   document.getElementById('theme-btn').textContent = 'theme ▾';
+  if (SHOW_SAMPLES) { samplesDropdown.hidden = true; samplesBtn.textContent = 'samples ▾'; }
 });
 
 // Keyboard: Alt+M cycles split modes
@@ -916,7 +926,7 @@ document.addEventListener('keydown', e => {
 function applyHideEqual(equalCount) {
   document.getElementById('diff-output').classList.toggle('hide-equal', hideEqual);
   const btn = document.getElementById('toggle-equal-btn');
-  btn.textContent = hideEqual ? 'show all' : 'changed only';
+  btn.textContent = hideEqual ? 'show all' : 'show changed only';
   if (equalCount !== undefined) btn.style.display = equalCount > 0 ? '' : 'none';
 }
 
@@ -1296,7 +1306,14 @@ function resetMergeState() {
   mergeState  = {};
   undoStack   = [];
   mergeActive = false;
-  document.getElementById('merge-panel').style.display = 'none';
+}
+
+function clearMergePanel() {
+  document.getElementById('merge-text').innerHTML = '';
+  document.getElementById('unresolved-badge').textContent = '';
+  document.getElementById('undo-btn').style.display = 'none';
+  document.getElementById('copy-btn').style.display = 'none';
+  document.getElementById('share-btn').style.display = 'none';
 }
 
 function applyMergeDecision(seg, chunk, side, skipUndo) {
@@ -1310,12 +1327,8 @@ function applyMergeDecision(seg, chunk, side, skipUndo) {
 
   if (!mergeState[seg]) mergeState[seg] = {};
   mergeState[seg][chunk] = next;
-
-  if (!mergeActive) {
-    mergeActive = true;
-    hideMergeHint();
-    document.getElementById('merge-panel').style.display = 'flex';
-  }
+  mergeActive = true;
+  hideMergeHint();
 
   updateSpansForChunk(seg, chunk);
   updateMergePanel();
@@ -1533,11 +1546,8 @@ document.getElementById('diff-output').addEventListener('click', e => {
       mergeState[seg][c] = newValue;
       updateSpansForChunk(seg, c);
     }
-    if (!mergeActive) {
-      mergeActive = true;
-      hideMergeHint();
-      document.getElementById('merge-panel').style.display = 'flex';
-    }
+    mergeActive = true;
+    hideMergeHint();
     updateMergePanel();
     updateHash();
     return;
@@ -1618,10 +1628,11 @@ function compare() {
   const stats   = document.getElementById('stats');
 
   if (!oldText.trim() || !newText.trim()) {
-    output.innerHTML = '<div class="placeholder">Paste text in both boxes above</div>';
+    output.innerHTML = '<div class="placeholder">Insert text in the boxes above to start comparing</div>';
     stats.textContent = '';
     applyHideEqual(0);
     resetMergeState();
+    clearMergePanel();
     return;
   }
 
@@ -1634,11 +1645,15 @@ function compare() {
     output.innerHTML = '<div class="placeholder">Something went wrong — try refreshing the page.</div>';
     stats.textContent = '';
     resetMergeState();
+    clearMergePanel();
     return;
   }
   resetMergeState();
   currentRows = rows;
   renderDiff(rows);
+  updateMergePanel();
+  document.getElementById('copy-btn').style.display = '';
+  document.getElementById('share-btn').style.display = '';
 }
 
 function debounce(fn, ms) {
@@ -1847,6 +1862,7 @@ themeBtn.addEventListener('click', e => {
   themeBtn.textContent = themeDropdown.hidden ? 'theme ▾' : 'theme ▴';
   optionsDropdown.hidden = true;
   optionsBtn.textContent = 'options ▾';
+  if (SHOW_SAMPLES) { samplesDropdown.hidden = true; samplesBtn.textContent = 'samples ▾'; }
 });
 
 themeDropdown.addEventListener('click', e => {
@@ -1857,6 +1873,91 @@ themeDropdown.addEventListener('click', e => {
   themeBtn.textContent = 'theme ▾';
 });
 
+// ---------------------------------------------------------------------------
+// Samples dropdown (shown with ?samples query param, loaded from samples.js)
+// ---------------------------------------------------------------------------
+let samplesDropdown, samplesBtn;
+
+function initSamplesDropdown(samples) {
+  const picker = document.createElement('div');
+  picker.className = 'samples-picker';
+  picker.id = 'samples-picker';
+
+  samplesBtn = document.createElement('button');
+  samplesBtn.className = 'fuzzy-btn';
+  samplesBtn.id = 'samples-btn';
+  samplesBtn.textContent = 'samples \u25be';
+
+  samplesDropdown = document.createElement('div');
+  samplesDropdown.className = 'samples-dropdown';
+  samplesDropdown.id = 'samples-dropdown';
+  samplesDropdown.hidden = true;
+
+  const label = document.createElement('div');
+  label.className = 'theme-section-label';
+  label.textContent = 'load sample';
+  samplesDropdown.appendChild(label);
+
+  for (const name of Object.keys(samples)) {
+    const btn = document.createElement('button');
+    btn.className = 'theme-option';
+    btn.dataset.sample = name;
+    btn.textContent = name;
+    samplesDropdown.appendChild(btn);
+  }
+
+  const divider = document.createElement('div');
+  divider.className = 'theme-divider';
+  samplesDropdown.appendChild(divider);
+
+  const clearBtn = document.createElement('button');
+  clearBtn.className = 'theme-option';
+  clearBtn.dataset.sample = '__clear__';
+  clearBtn.textContent = 'clear';
+  samplesDropdown.appendChild(clearBtn);
+
+  picker.appendChild(samplesBtn);
+  picker.appendChild(samplesDropdown);
+
+  const optionsPicker = document.getElementById('options-picker');
+  optionsPicker.parentNode.insertBefore(picker, optionsPicker);
+
+  samplesBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    samplesDropdown.hidden = !samplesDropdown.hidden;
+    samplesBtn.textContent = samplesDropdown.hidden ? 'samples \u25be' : 'samples \u25b4';
+    optionsDropdown.hidden = true;
+    optionsBtn.textContent = 'options \u25be';
+    themeDropdown.hidden = true;
+    themeBtn.textContent = 'theme \u25be';
+  });
+
+  samplesDropdown.addEventListener('click', e => {
+    const opt = e.target.closest('.theme-option');
+    if (!opt) return;
+    const key = opt.dataset.sample;
+
+    if (key === '__clear__') {
+      textOld.value = '';
+      textNew.value = '';
+    } else {
+      const sample = samples[key];
+      if (!sample) return;
+      textOld.value = sample.old;
+      textNew.value = sample.new;
+    }
+
+    updateInputStats('stats-old', textOld.value);
+    updateInputStats('stats-new', textNew.value);
+    savedMergeStates = {};
+    compare();
+    updateHash();
+
+    samplesDropdown.hidden = true;
+    samplesBtn.textContent = 'samples \u25be';
+  });
+}
+
 document.addEventListener('click', e => {
   if (!e.target.closest('#theme-picker')) {
     themeDropdown.hidden = true;
@@ -1865,6 +1966,10 @@ document.addEventListener('click', e => {
   if (!e.target.closest('#options-picker')) {
     optionsDropdown.hidden = true;
     optionsBtn.textContent = 'options ▾';
+  }
+  if (SHOW_SAMPLES && !e.target.closest('#samples-picker')) {
+    samplesDropdown.hidden = true;
+    samplesBtn.textContent = 'samples ▾';
   }
 });
 
@@ -1880,69 +1985,84 @@ updateOptionsIndicator();
 // Apply saved theme on load
 applyTheme(currentTheme);
 
-// Initialize: restore full session from hash if present, otherwise use sample text
-const fromHash = decodeFromHash();
-if (fromHash) {
-  textOld.value = fromHash.o ?? '';
-  textNew.value = fromHash.n ?? '';
+// Initialize: restore from hash if present, otherwise start empty
+function initApp() {
+  const fromHash = decodeFromHash();
+  if (fromHash) {
+    textOld.value = fromHash.o ?? '';
+    textNew.value = fromHash.n ?? '';
 
-  // Restore split mode
-  const validModes = ['paragraph', 'sentence', 'clause', 'line'];
-  if (fromHash.md && validModes.includes(fromHash.md)) {
-    currentMode = fromHash.md;
-    document.querySelectorAll('.mode-btn').forEach(b =>
-      b.classList.toggle('active', b.dataset.mode === currentMode));
+    // Restore split mode
+    const validModes = ['paragraph', 'sentence', 'clause', 'line'];
+    if (fromHash.md && validModes.includes(fromHash.md)) {
+      currentMode = fromHash.md;
+      document.querySelectorAll('.mode-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.mode === currentMode));
+    }
+
+    // Restore toggle states
+    if (typeof fromHash.fz === 'boolean') {
+      fuzzyEnabled = fromHash.fz;
+      document.getElementById('fuzzy-btn').classList.toggle('selected', fuzzyEnabled);
+    }
+    if (typeof fromHash.ch === 'boolean') {
+      charEnabled = fromHash.ch;
+      document.getElementById('char-btn').classList.toggle('selected', charEnabled);
+    }
+    if (typeof fromHash.ic === 'boolean') {
+      ignoreCase = fromHash.ic;
+      document.getElementById('ignore-case-btn').classList.toggle('selected', ignoreCase);
+    }
+    if (typeof fromHash.iw === 'boolean') {
+      ignoreWS = fromHash.iw;
+      document.getElementById('ignore-ws-btn').classList.toggle('selected', ignoreWS);
+    }
+    updateOptionsIndicator();
   }
 
-  // Restore toggle states
-  if (typeof fromHash.fz === 'boolean') {
-    fuzzyEnabled = fromHash.fz;
-    document.getElementById('fuzzy-btn').classList.toggle('selected', fuzzyEnabled);
+  updateInputStats('stats-old', textOld.value);
+  updateInputStats('stats-new', textNew.value);
+  compare(); // generates rows with correct segIdx mapping
+
+  // Restore merge decisions AFTER compare() so segIdx is valid
+  if (fromHash?.ms && Object.keys(fromHash.ms).length > 0) {
+    const validRows = new Map(
+      currentRows.filter(r => r.segIdx !== undefined).map(r => [r.segIdx, r])
+    );
+    mergeState = {};
+    for (const [seg, chunks] of Object.entries(fromHash.ms)) {
+      const segNum = +seg;
+      const row = validRows.get(segNum);
+      if (!row) continue;
+      mergeState[segNum] = {};
+      for (const [chunk, decision] of Object.entries(chunks)) {
+        if (+chunk < row.chunkCount) {
+          mergeState[segNum][+chunk] = decision;
+        }
+      }
+      if (Object.keys(mergeState[segNum]).length === 0) delete mergeState[segNum];
+    }
+    if (Object.keys(mergeState).length > 0) {
+      mergeActive = true;
+      hideMergeHint();
+      reapplyMergeVisuals();
+      updateMergePanel();
+    }
   }
-  if (typeof fromHash.ch === 'boolean') {
-    charEnabled = fromHash.ch;
-    document.getElementById('char-btn').classList.toggle('selected', charEnabled);
-  }
-  if (typeof fromHash.ic === 'boolean') {
-    ignoreCase = fromHash.ic;
-    document.getElementById('ignore-case-btn').classList.toggle('selected', ignoreCase);
-  }
-  if (typeof fromHash.iw === 'boolean') {
-    ignoreWS = fromHash.iw;
-    document.getElementById('ignore-ws-btn').classList.toggle('selected', ignoreWS);
-  }
-  updateOptionsIndicator();
 }
 
-updateInputStats('stats-old', textOld.value);
-updateInputStats('stats-new', textNew.value);
-compare(); // generates rows with correct segIdx mapping
-
-// Restore merge decisions AFTER compare() so segIdx is valid
-if (fromHash?.ms && Object.keys(fromHash.ms).length > 0) {
-  const validRows = new Map(
-    currentRows.filter(r => r.segIdx !== undefined).map(r => [r.segIdx, r])
-  );
-  mergeState = {};
-  for (const [seg, chunks] of Object.entries(fromHash.ms)) {
-    const segNum = +seg;
-    const row = validRows.get(segNum);
-    if (!row) continue;
-    mergeState[segNum] = {};
-    for (const [chunk, decision] of Object.entries(chunks)) {
-      if (+chunk < row.chunkCount) {
-        mergeState[segNum][+chunk] = decision;
-      }
-    }
-    if (Object.keys(mergeState[segNum]).length === 0) delete mergeState[segNum];
-  }
-  if (Object.keys(mergeState).length > 0) {
-    mergeActive = true;
-    hideMergeHint();
-    document.getElementById('merge-panel').style.display = 'flex';
-    reapplyMergeVisuals();
-    updateMergePanel();
-  }
+// In dev mode, load samples.js then init; in production, init immediately
+if (SHOW_SAMPLES) {
+  const script = document.createElement('script');
+  script.src = 'samples.js';
+  script.onload = () => {
+    if (window.DIFFER_SAMPLES) initSamplesDropdown(window.DIFFER_SAMPLES);
+    initApp();
+  };
+  script.onerror = () => initApp(); // samples.js missing — init without samples
+  document.head.appendChild(script);
+} else {
+  initApp();
 }
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');

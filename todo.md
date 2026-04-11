@@ -39,7 +39,7 @@
 - [x] Theme picker: auto/light/dark + named themes (nord, solarized dark, dracula, github) via dropdown button
 
 ## Pre-launch
-- [ ] Sample/placeholder text: remove or gate behind a dev-mode check before publishing. Investigate options — e.g. only pre-fill when served from `file://` or `localhost`, leave boxes empty when hosted on a public URL.
+- [x] Sample/placeholder text: gated behind ?samples query param; dropdown with multiple sample scenarios; empty textareas by default
 
 ## Publishing / distribution
 - [ ] Mobile-friendly layout + unified view (stacked panels, single-column diff, touch-friendly controls)
