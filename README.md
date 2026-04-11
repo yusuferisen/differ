@@ -60,7 +60,8 @@ Activated automatically on the first tap of any highlighted word or `«`/`»` bu
 - **Tap a highlighted word** on either side → accept that version for that diff chunk
 - **Tap the other side** of the same chunk → flip the decision
 - **Tap the same side again** → unset (back to unresolved)
-- **`«` / `»`** buttons (hover a changed row) → accept the entire row left or right in one action
+- **`«` / `»`** buttons (hover any changed, removed, or added row) → accept the entire row left or right in one action; click again to unset
+- **Removed/added rows** are also interactive — click or use `«`/`»` to keep or exclude a segment that only exists on one side
 - **Undo** button (up to 20 steps, batch row-accept = 1 step)
 - Switching split modes preserves merge decisions per mode — switching back restores them
 
@@ -68,8 +69,9 @@ Activated automatically on the first tap of any highlighted word or `«`/`»` bu
 
 Appears at the bottom on the first merge action.
 
-- Live-updating assembled text
+- Live-updating assembled text using mode-appropriate delimiters (spaces between sentences/clauses, blank lines between paragraphs, newlines between lines)
 - **Unresolved chunks**: `{old|new}` inline (amber) if short ≤80 chars, or a two-line block with `← old` / `→ new` each clickable for long chunks
+- Removed/added segments are included by default; exclude them via the diff table
 - Block-format conflicts can also be resolved directly in the panel
 - **Copy** — always available; includes `{old|new}` placeholders for unresolved chunks. Button flashes green on copy.
 
@@ -132,16 +134,20 @@ computeDiff(segs1, segs2, fuzzy)
   → for removed+added blocks:
       fuzzy off → positional pairing
       fuzzy on  → fuzzyPairBlocks() using segmentSimilarity()
-  → for each changed row:
+  → for each changed row (both sides present):
       row.parts      = diffWords() or diffChars() with ignoreCase / ignoreWS normalization
       row.segIdx     = unique integer (merge state key)
       row.chunkCount = number of highlighted chunks
+  → for removed, added, or changed-with-one-side rows:
+      row.segIdx     = unique integer
+      row.chunkCount = 1 (whole segment is one merge decision)
 
 renderDiff(rows)
-  → renderHighlightedDiff(row.parts, side, row.segIdx)
+  → renderHighlightedDiff(row.parts, side, row.segIdx)  // changed rows
+  → makeHighlightSpan(text, ...)                         // removed/added rows
       each highlighted span: data-seg, data-chunk, data-side, data-base
       class from resolveSpanClass() reading mergeState
-  → «/» accept-all buttons overlaid at row center (hover-visible)
+  → «/» accept-all buttons on all non-equal rows (hover-visible)
   → merge hint (removed on first merge action)
 ```
 
@@ -183,7 +189,7 @@ Threshold: 0.25
 
 ### Theme system
 
-Themes are JS objects of CSS custom property overrides applied to `document.documentElement.style`. `auto` clears all overrides and lets the `@media (prefers-color-scheme)` block handle it. Choice persists in `localStorage` as `differ-theme`.
+Themes are JS objects of CSS custom property overrides applied to `document.documentElement.style`. `auto` reads `window.matchMedia('(prefers-color-scheme: light)')` and applies the matching theme, updating live when the system preference changes. Choice persists in `localStorage` as `differ-theme`. The CSS `:root` block is a FOUC fallback only — the JS `THEMES` object is the source of truth.
 
 All colors in the stylesheet are CSS variables — adding a new theme requires only a new entry in the `THEMES` object.
 
