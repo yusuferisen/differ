@@ -4,68 +4,34 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>differ</title>
-  <script src="https://unpkg.com/compromise@14.15.0/builds/compromise.min.js"></script>
-  <script src="https://unpkg.com/diff@8.0.4/dist/diff.min.js"></script>
+  <script src="https://unpkg.com/compromise@14.15.0/builds/compromise.min.js" integrity="sha384-lIQvxbxKNGZexiYjy/wIgdL9Bhhv92x6+vY9icxdg1wuGoLplyYvflYrfIzHo2ic" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/diff@8.0.4/dist/diff.min.js" integrity="sha384-P8czsgzqC9sMqYYGf7Ir0xELcYBVKJGXj3IMxJUzzi+YiDZ0/FBBNlVt0JCKjgU3" crossorigin="anonymous"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* FOUC fallback — source of truth is the THEMES object in JS */
     :root {
-      --bg:           #21252b;
-      --bg-panel:     #282c34;
-      --bg-input:     #1e2227;
-      --bg-merge:     #1a1d23;
-      --border:       #3e4451;
-      --text:         #abb2bf;
-      --text-bright:  #e6e6e6;
-      --text-dim:     #4b5263;
-      --text-mute:    #3e4451;
-      --accent:       #61afef;
-
-      --color-old:    #e06c75;
-      --color-new:    #7ec699;
-      --bg-old:       rgba(59, 32, 32, 0.55);
-      --bg-new:       rgba(26, 46, 26, 0.55);
-      --hl-old:       rgba(224, 108, 117, 0.38);
-      --hl-new:       rgba(126, 198, 153, 0.38);
-
-      --amber:        #e5c07b;
-      --amber-bg:     rgba(229, 192, 123, 0.18);
-      --amber-border: rgba(229, 192, 123, 0.25);
-      --purple:       #c678dd;
-      --purple-bg:    #c678dd22;
-
-      --settled-bg:   rgba(100, 100, 100, 0.15);
-      --rejected-bg:  rgba(100, 100, 100, 0.08);
+      --bg: #21252b; --bg-panel: #282c34; --bg-input: #1e2227; --bg-merge: #1a1d23;
+      --border: #3e4451; --text: #abb2bf; --text-bright: #e6e6e6;
+      --text-dim: #4b5263; --text-mute: #3e4451; --accent: #61afef;
+      --color-old: #e06c75; --color-new: #7ec699;
+      --bg-old: rgba(59,32,32,0.55); --bg-new: rgba(26,46,26,0.55);
+      --hl-old: rgba(224,108,117,0.38); --hl-new: rgba(126,198,153,0.38);
+      --amber: #e5c07b; --amber-bg: rgba(229,192,123,0.18); --amber-border: rgba(229,192,123,0.25);
+      --purple: #c678dd; --purple-bg: #c678dd22;
+      --settled-bg: rgba(100,100,100,0.15); --rejected-bg: rgba(100,100,100,0.08);
     }
-
     @media (prefers-color-scheme: light) {
       :root {
-        --bg:           #fafafa;
-        --bg-panel:     #f0f2f5;
-        --bg-input:     #ffffff;
-        --bg-merge:     #f5f5f5;
-        --border:       #d0d4db;
-        --text:         #383a42;
-        --text-bright:  #1a1a1a;
-        --text-dim:     #9a9fa9;
-        --text-mute:    #c0c4ce;
-        --accent:       #4078f2;
-
-        --color-old:    #ca1243;
-        --color-new:    #50a14f;
-        --bg-old:       rgba(202, 18, 67, 0.07);
-        --bg-new:       rgba(80, 161, 79, 0.07);
-        --hl-old:       rgba(202, 18, 67, 0.15);
-        --hl-new:       rgba(80, 161, 79, 0.15);
-
-        --amber:        #986801;
-        --amber-bg:     rgba(152, 104, 1, 0.1);
-        --amber-border: rgba(152, 104, 1, 0.25);
-        --purple:       #a626a4;
-        --purple-bg:    rgba(166, 38, 164, 0.08);
-
-        --settled-bg:   rgba(0, 0, 0, 0.06);
-        --rejected-bg:  rgba(0, 0, 0, 0.03);
+        --bg: #fafafa; --bg-panel: #f0f2f5; --bg-input: #ffffff; --bg-merge: #f5f5f5;
+        --border: #d0d4db; --text: #383a42; --text-bright: #1a1a1a;
+        --text-dim: #9a9fa9; --text-mute: #c0c4ce; --accent: #4078f2;
+        --color-old: #ca1243; --color-new: #50a14f;
+        --bg-old: rgba(202,18,67,0.07); --bg-new: rgba(80,161,79,0.07);
+        --hl-old: rgba(202,18,67,0.15); --hl-new: rgba(80,161,79,0.15);
+        --amber: #986801; --amber-bg: rgba(152,104,1,0.1); --amber-border: rgba(152,104,1,0.25);
+        --purple: #a626a4; --purple-bg: rgba(166,38,164,0.08);
+        --settled-bg: rgba(0,0,0,0.06); --rejected-bg: rgba(0,0,0,0.03);
       }
     }
 
@@ -389,7 +355,11 @@
     }
 
     .diff-row.changed:hover .row-accept-left,
-    .diff-row.changed:hover .row-accept-right { opacity: 0.6; }
+    .diff-row.changed:hover .row-accept-right,
+    .diff-row.removed:hover .row-accept-left,
+    .diff-row.removed:hover .row-accept-right,
+    .diff-row.added:hover .row-accept-left,
+    .diff-row.added:hover .row-accept-right { opacity: 0.6; }
 
     .row-accept-left:hover,
     .row-accept-right:hover { opacity: 1 !important; border-color: var(--text); }
@@ -632,7 +602,7 @@ Organizers recommend arriving before noon to secure a good spot near the main st
 </div>
 
 <div id="diff-output">
-  <div class="placeholder">Paste text above and click Compare</div>
+  <div class="placeholder">Paste text in both boxes above</div>
 </div>
 
 <div id="merge-panel" style="display:none">
@@ -818,7 +788,11 @@ function splitText(text, mode) {
 const FUZZY_THRESHOLD = 0.25;
 
 function jaccardSimilarity(a, b) {
-  const prep = s => ignoreCase ? s.toLowerCase() : s;
+  const prep = s => {
+    if (ignoreWS) s = s.replace(/\s+/g, ' ').trim();
+    if (ignoreCase) s = s.toLowerCase();
+    return s;
+  };
   const wa = new Set((prep(a).match(/\w+/g) || []));
   const wb = new Set((prep(b).match(/\w+/g) || []));
   if (wa.size === 0 && wb.size === 0) return 1;
@@ -830,7 +804,11 @@ function jaccardSimilarity(a, b) {
 
 function segmentSimilarity(a, b) {
   const jaccard = jaccardSimilarity(a, b);
-  const prep = s => ignoreCase ? s.toLowerCase() : s;
+  const prep = s => {
+    if (ignoreWS) s = s.replace(/\s+/g, ' ').trim();
+    if (ignoreCase) s = s.toLowerCase();
+    return s;
+  };
   const firstWord = s => (prep(s).match(/\b\w+/) || [''])[0];
   const firstWordBonus = firstWord(a) === firstWord(b) && firstWord(a) !== '' ? 1 : 0;
   const wA = (a.match(/\w+/g) || []).length;
@@ -925,7 +903,7 @@ function computeDiff(segs1, segs2, fuzzy = false) {
     }
   }
 
-  // Annotate changed rows with segIdx and precomputed parts
+  // Annotate non-equal rows with segIdx (and precomputed parts for changed rows)
   let segCounter = 0;
   for (const row of rows) {
     if (row.type === 'changed' && row.left && row.right) {
@@ -937,6 +915,10 @@ function computeDiff(segs1, segs2, fuzzy = false) {
         ? Diff.diffChars(la, ra, diffOpts)
         : Diff.diffWords(la, ra, diffOpts);
       row.chunkCount = countChunks(row.parts);
+    } else if (row.type === 'removed' || row.type === 'added' ||
+               (row.type === 'changed' && (!row.left || !row.right))) {
+      row.segIdx = segCounter++;
+      row.chunkCount = 1;
     }
   }
 
@@ -1028,6 +1010,11 @@ function makeCell(row, side) {
     cell.textContent = text;
   } else if (row.type === 'changed' && row.left && row.right) {
     cell.appendChild(renderHighlightedDiff(row.parts, side, row.segIdx));
+  } else if (row.segIdx !== undefined) {
+    const baseClass = (row.type === 'added' || (row.type === 'changed' && !row.left))
+      ? (charEnabled ? 'char-new' : 'word-new')
+      : (charEnabled ? 'char-old' : 'word-old');
+    cell.appendChild(makeHighlightSpan(text, baseClass, row.segIdx, 0, side));
   } else {
     cell.textContent = text;
   }
@@ -1077,7 +1064,7 @@ function renderDiff(rows) {
     div.appendChild(makeCell(row, 'left'));
     div.appendChild(makeCell(row, 'right'));
 
-    if (row.type === 'changed' && row.segIdx !== undefined) {
+    if (row.segIdx !== undefined) {
       const btnL = document.createElement('button');
       btnL.className = 'row-accept-left';
       btnL.textContent = '«';
@@ -1144,16 +1131,36 @@ function applyMergeDecision(seg, chunk, side, skipUndo) {
   updateHash();
 }
 
+function modeDelimiter() {
+  switch (currentMode) {
+    case 'sentence': return ' ';
+    case 'clause':   return ' ';
+    case 'paragraph': return '\n\n';
+    case 'line':     return '\n';
+    default:         return '\n';
+  }
+}
+
 function computeMergedParts() {
   const tokens = [];
 
   for (const row of currentRows) {
+    const startLen = tokens.length;
+
     if (row.type === 'equal') {
       tokens.push({ type: 'text', text: row.left });
     } else if (row.type === 'removed') {
-      tokens.push({ type: 'text', text: row.left });
+      const dec = mergeState[row.segIdx]?.[0] ?? null;
+      if (dec === null || dec === 'left') {
+        tokens.push({ type: 'text', text: row.left });
+      }
+      // dec === 'right': exclude (accept deletion)
     } else if (row.type === 'added') {
-      tokens.push({ type: 'text', text: row.right });
+      const dec = mergeState[row.segIdx]?.[0] ?? null;
+      if (dec === null || dec === 'right') {
+        tokens.push({ type: 'text', text: row.right });
+      }
+      // dec === 'left': exclude (reject addition)
     } else if (row.type === 'changed' && row.left && row.right) {
       const { segIdx, parts } = row;
       let chunkIdx = 0;
@@ -1207,9 +1214,30 @@ function computeMergedParts() {
           chunkIdx++;
         }
       }
+    } else if (row.type === 'changed' && row.segIdx !== undefined) {
+      // changed row with only one side (non-fuzzy uneven pairing)
+      if (row.left && !row.right) {
+        const dec = mergeState[row.segIdx]?.[0] ?? null;
+        if (dec === null || dec === 'left') {
+          tokens.push({ type: 'text', text: row.left });
+        }
+      } else if (row.right && !row.left) {
+        const dec = mergeState[row.segIdx]?.[0] ?? null;
+        if (dec === null || dec === 'right') {
+          tokens.push({ type: 'text', text: row.right });
+        }
+      }
     }
 
-    tokens.push({ type: 'text', text: '\n' });
+    // Only add separator if this row contributed content
+    if (tokens.length > startLen) {
+      tokens.push({ type: 'sep' });
+    }
+  }
+
+  // Remove trailing separator
+  if (tokens.length > 0 && tokens[tokens.length - 1].type === 'sep') {
+    tokens.pop();
   }
 
   return tokens;
@@ -1224,6 +1252,8 @@ function updateMergePanel() {
   for (const token of tokens) {
     if (token.type === 'text') {
       mergeText.appendChild(document.createTextNode(token.text));
+    } else if (token.type === 'sep') {
+      mergeText.appendChild(document.createTextNode(modeDelimiter()));
     } else {
       unresolvedCount++;
       const oldText = token.old ?? '';
@@ -1302,8 +1332,14 @@ document.getElementById('diff-output').addEventListener('click', e => {
     undoStack.push({ batch: true, seg, chunks });
     if (undoStack.length > 20) undoStack.shift();
     if (!mergeState[seg]) mergeState[seg] = {};
+    // Toggle: if all chunks already set to this side, unset them
+    let allSet = true;
     for (let c = 0; c < count; c++) {
-      mergeState[seg][c] = side;
+      if ((mergeState[seg]?.[c] ?? null) !== side) { allSet = false; break; }
+    }
+    const newValue = allSet ? null : side;
+    for (let c = 0; c < count; c++) {
+      mergeState[seg][c] = newValue;
       updateSpansForChunk(seg, c);
     }
     if (!mergeActive) {
@@ -1351,17 +1387,20 @@ document.getElementById('undo-btn').addEventListener('click', () => {
 // Copy merged result
 document.getElementById('copy-btn').addEventListener('click', () => {
   const tokens = computeMergedParts();
+  const delim = modeDelimiter();
   let text = '';
   for (const token of tokens) {
     if (token.type === 'text') {
       text += token.text;
+    } else if (token.type === 'sep') {
+      text += delim;
     } else {
       const o = token.old ?? '';
       const n = token.new ?? '';
       text += o && n ? `{${o}|${n}}` : o ? `{${o}|}` : `{|${n}}`;
     }
   }
-  const clean = text.replace(/\n+$/, '');
+  const clean = delim === ' ' ? text.trimEnd() : text.replace(/\n+$/, '');
   const btn = document.getElementById('copy-btn');
   const confirm = () => {
     btn.textContent = 'copied!';
@@ -1388,7 +1427,7 @@ function compare() {
   const stats   = document.getElementById('stats');
 
   if (!oldText.trim() || !newText.trim()) {
-    output.innerHTML = '<div class="placeholder">Paste text in either box above</div>';
+    output.innerHTML = '<div class="placeholder">Paste text in both boxes above</div>';
     stats.textContent = '';
     resetMergeState();
     return;
@@ -1396,7 +1435,15 @@ function compare() {
 
   const segs1 = splitText(oldText, currentMode);
   const segs2 = splitText(newText, currentMode);
-  const rows  = computeDiff(segs1, segs2, fuzzyEnabled);
+  let rows;
+  try {
+    rows = computeDiff(segs1, segs2, fuzzyEnabled);
+  } catch {
+    output.innerHTML = '<div class="placeholder">Failed to compute diff — the diff library may not have loaded. Try refreshing.</div>';
+    stats.textContent = '';
+    resetMergeState();
+    return;
+  }
   resetMergeState();
   currentRows = rows;
   renderDiff(rows);
@@ -1444,7 +1491,10 @@ function encodeForHash() {
       if (Object.keys(nonNull).length > 0) pruned[seg] = nonNull;
     }
     if (Object.keys(pruned).length > 0) state.ms = pruned;
-    return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    const bytes = new TextEncoder().encode(JSON.stringify(state));
+    let binary = '';
+    for (const b of bytes) binary += String.fromCharCode(b);
+    return btoa(binary);
   } catch { return ''; }
 }
 
@@ -1452,7 +1502,9 @@ function decodeFromHash() {
   try {
     const raw = location.hash.slice(1);
     if (!raw) return null;
-    const p = JSON.parse(decodeURIComponent(escape(atob(raw))));
+    const binary = atob(raw);
+    const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+    const p = JSON.parse(new TextDecoder().decode(bytes));
     if (typeof p.o === 'string' && typeof p.n === 'string') return p;
     return null;
   } catch { return null; }
@@ -1572,19 +1624,24 @@ function applyTheme(name) {
   localStorage.setItem('differ-theme', name);
   const root = document.documentElement;
 
-  // Clear any inline variable overrides
-  Object.keys(THEMES.dark).forEach(k => root.style.removeProperty(k));
-
-  if (name !== 'auto') {
-    const vars = THEMES[name] ?? THEMES.dark;
-    Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
+  let vars;
+  if (name === 'auto') {
+    vars = window.matchMedia('(prefers-color-scheme: light)').matches
+      ? THEMES.light : THEMES.dark;
+  } else {
+    vars = THEMES[name] ?? THEMES.dark;
   }
+  Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
 
   // Update selected state in dropdown
   document.querySelectorAll('.theme-option').forEach(btn => {
     btn.classList.toggle('selected', btn.dataset.theme === name);
   });
 }
+
+window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+  if (currentTheme === 'auto') applyTheme('auto');
+});
 
 // Dropdown toggle
 const themeBtn      = document.getElementById('theme-btn');
@@ -1656,18 +1713,29 @@ compare(); // generates rows with correct segIdx mapping
 
 // Restore merge decisions AFTER compare() so segIdx is valid
 if (fromHash?.ms && Object.keys(fromHash.ms).length > 0) {
+  const validRows = new Map(
+    currentRows.filter(r => r.segIdx !== undefined).map(r => [r.segIdx, r])
+  );
   mergeState = {};
   for (const [seg, chunks] of Object.entries(fromHash.ms)) {
-    mergeState[+seg] = {};
+    const segNum = +seg;
+    const row = validRows.get(segNum);
+    if (!row) continue;
+    mergeState[segNum] = {};
     for (const [chunk, decision] of Object.entries(chunks)) {
-      mergeState[+seg][+chunk] = decision;
+      if (+chunk < row.chunkCount) {
+        mergeState[segNum][+chunk] = decision;
+      }
     }
+    if (Object.keys(mergeState[segNum]).length === 0) delete mergeState[segNum];
   }
-  mergeActive = true;
-  hideMergeHint();
-  document.getElementById('merge-panel').style.display = 'flex';
-  reapplyMergeVisuals();
-  updateMergePanel();
+  if (Object.keys(mergeState).length > 0) {
+    mergeActive = true;
+    hideMergeHint();
+    document.getElementById('merge-panel').style.display = 'flex';
+    reapplyMergeVisuals();
+    updateMergePanel();
+  }
 }
 </script>
 </body>
