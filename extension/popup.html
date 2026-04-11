@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <h1>differ</h1>
+
+  <label for="original">Original</label>
+  <div class="textarea-wrap">
+    <textarea id="original" placeholder="Select text on any page, right-click → Set as Original" spellcheck="false"></textarea>
+    <button class="clear-btn" data-target="original" title="Clear">&times;</button>
+  </div>
+
+  <label for="modified">Modified</label>
+  <div class="textarea-wrap">
+    <textarea id="modified" placeholder="Paste or right-click → Set as Modified" spellcheck="false"></textarea>
+    <button class="clear-btn" data-target="modified" title="Clear">&times;</button>
+  </div>
+
+  <button id="open-btn">Open in Differ</button>
+
+  <script src="popup.js"></script>
+</body>
+</html>

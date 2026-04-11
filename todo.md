@@ -42,9 +42,9 @@
 - [x] Sample/placeholder text: gated behind ?samples query param; dropdown with multiple sample scenarios; empty textareas by default
 
 ## Publishing / distribution
-- [ ] Mobile-friendly layout + unified view (stacked panels, single-column diff, touch-friendly controls)
+- [x] Mobile-friendly layout + unified view (stacked panels, single-column diff, touch-friendly controls)
 - [x] Web app compatibility (so it can be saved as an app from Chrome browsers)
-- [ ] Responsive breakpoints for tablet/narrow viewports
+- [x] Responsive breakpoints for tablet/narrow viewports
 - [x] Fully offline mode (bundle compromise.js + jsdiff inline, no CDN dependency)
 - [x] Deploy as static site (GitHub Pages + custom domain differapp.com)
   - [x] CNAME file for custom domain
@@ -58,4 +58,9 @@
 - [x] Shareable URL (base64-encoded hash, "link" button copies URL, ~8KB limit)
 
 ## Chrome extension
-- [ ] Context-menu extension (lives in `extension/` subdirectory): select text on any web page → right-click → "Set as original" or "Set as changed" → opens differ with both texts pre-loaded
+- [x] Context-menu extension (lives in `extension/` subdirectory): select text on any web page → right-click → "Set as Original" or "Set as Modified" → opens differ with both texts pre-loaded
+  - [x] Manifest V3 with contextMenus, storage, scripting permissions
+  - [x] Service worker: context menu registration, auto-open on pair completion
+  - [x] Content script injection into specific tab (fills `#text-old` / `#text-new`)
+  - [x] Popup: Original + Modified textareas, "Open in Differ" button, dark theme
+  - [x] Icons generated from main app icon (16, 48, 128px)

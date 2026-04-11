@@ -2,7 +2,7 @@
 
 A browser-based text diff and merge tool. Compares two texts at the sentence, paragraph, clause, or line level — with word- or character-level inline highlighting within each changed pair — and lets you interactively build a merged result.
 
-**[differapp.com](https://differapp.com)** — no server, no installation. Installable as a web app from Chrome, Edge, or Safari.
+**[differapp.com](https://differapp.com)** — no server, no installation. Installable as a web app from Chrome, Edge, or Safari. Also available as a [Chrome extension](#chrome-extension) for comparing text across any web page.
 
 ---
 
@@ -110,6 +110,25 @@ Click **share link** in the toolbar to copy the current URL. Anyone opening it s
 - Each input box: live word count and character count
 - Diff output: total sections · changed · unchanged
 - Final version panel: count of undecided chunks
+
+### Chrome extension
+
+A Manifest V3 Chrome extension that lets you compare text from any web page without copy-pasting into the app manually.
+
+**How it works:**
+1. Select text on any page, right-click → **Differ > Set as Original**
+2. Go to any page (same or different tab), select text, right-click → **Differ > Set as Modified**
+3. Differ opens automatically with both texts loaded
+
+**Popup:** Click the extension icon to see and edit captured texts, paste directly, or click **Open in Differ** at any time — even with empty fields.
+
+**Technical details:**
+- Texts persist in `chrome.storage.local` across tabs and browser restarts
+- Full selection text is retrieved via the scripting API (avoids `selectionText` truncation)
+- Content script injection fills the web app's textareas without modifying `index.html`
+- Popup delegates tab creation to the background service worker to survive popup close
+
+To install locally: load `extension/` as an unpacked extension at `chrome://extensions` (enable Developer mode).
 
 ---
 
@@ -230,6 +249,12 @@ differ/
 ├── icon-maskable.svg       # maskable icon (vector)
 ├── samples.js              # sample text pairs (loaded with ?samples param)
 ├── CNAME                   # custom domain for GitHub Pages (differapp.com)
+├── extension/              # Chrome extension (Manifest V3)
+│   ├── manifest.json       # extension manifest
+│   ├── background.js       # service worker (context menus, tab orchestration)
+│   ├── content.js          # injected into differ to fill textareas
+│   ├── popup.html/css/js   # extension popup UI
+│   └── icons/              # extension icons (16, 48, 128px)
 ├── todo.md                 # feature roadmap
 └── README.md               # this file
 ```
@@ -242,12 +267,9 @@ Open `index.html` directly in a browser. No build step, no server needed. Add `?
 
 See [todo.md](todo.md). Remaining items:
 
-**UI / UX**
-- Settings/Advanced panel to hide technical options from non-technical users
-
 **Research**
 - Investigate semantic change classification using compromise.js (already loaded): label diff chunks by what kind of thing changed — number, date, name, sentiment, etc.
 
 **Publishing**
-- Mobile-friendly layout + unified single-column view
-- Chrome extension for comparing selected text across web pages
+- DNS propagation + GitHub Pages DNS verification
+- HTTPS enforcement and custom domain ownership verification (TXT record)
