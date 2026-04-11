@@ -2,7 +2,7 @@
 
 A browser-based text diff and merge tool. Compares two texts at the sentence, paragraph, clause, or line level — with word- or character-level inline highlighting within each changed pair — and lets you interactively build a merged result.
 
-No server. No installation. Open `index.html` and start comparing. Installable as a web app from Chrome, Edge, or Safari.
+**[differapp.com](https://differapp.com)** — no server, no installation. Installable as a web app from Chrome, Edge, or Safari.
 
 ---
 
@@ -23,9 +23,7 @@ All processing runs entirely in the browser. Text never leaves your device.
 
 ## Usage
 
-```
-open index.html
-```
+Visit **[differapp.com](https://differapp.com)** — or open `index.html` locally.
 
 Paste original text in the left box, modified text in the right. The diff updates live as you type. No compare button.
 
@@ -231,6 +229,7 @@ differ/
 ├── icon-maskable-512.png   # app icon (maskable, Android adaptive)
 ├── icon-maskable.svg       # maskable icon (vector)
 ├── samples.js              # sample text pairs (loaded with ?samples param)
+├── CNAME                   # custom domain for GitHub Pages (differapp.com)
 ├── todo.md                 # feature roadmap
 └── README.md               # this file
 ```
@@ -251,5 +250,4 @@ See [todo.md](todo.md). Remaining items:
 
 **Publishing**
 - Mobile-friendly layout + unified single-column view
-- Deploy to GitHub Pages
 - Chrome extension for comparing selected text across web pages

@@ -46,7 +46,15 @@
 - [x] Web app compatibility (so it can be saved as an app from Chrome browsers)
 - [ ] Responsive breakpoints for tablet/narrow viewports
 - [x] Fully offline mode (bundle compromise.js + jsdiff inline, no CDN dependency)
-- [ ] Deploy as static site (GitHub Pages / Cloudflare Pages / Netlify)
+- [x] Deploy as static site (GitHub Pages + custom domain differapp.com)
+  - [x] CNAME file for custom domain
+  - [x] Service worker cache updated (v3, added maskable icon)
+  - [x] DNS A records pointing to GitHub Pages IPs (Namecheap)
+  - [x] CNAME record for www → yusuferisen.github.io (Namecheap)
+  - [x] GitHub Pages enabled (deploy from branch, main, root)
+  - [ ] DNS propagation + GitHub Pages DNS check passes
+  - [ ] Enforce HTTPS enabled in GitHub Pages settings
+  - [ ] Verify custom domain ownership (TXT record in Namecheap)
 - [x] Shareable URL (base64-encoded hash, "link" button copies URL, ~8KB limit)
 
 ## Chrome extension
