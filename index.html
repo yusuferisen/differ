@@ -552,6 +552,129 @@
       font-size: 12px;
       gap: 6px;
     }
+
+    /* ── Responsive: touch devices ── */
+    @media (hover: none) {
+      .diff-row.changed .row-accept-left,
+      .diff-row.changed .row-accept-right,
+      .diff-row.removed .row-accept-left,
+      .diff-row.removed .row-accept-right,
+      .diff-row.added .row-accept-left,
+      .diff-row.added .row-accept-right { opacity: 0.5; }
+    }
+
+    /* ── Responsive: tablet (≤768px) ── */
+    @media (max-width: 768px) {
+      header { flex-wrap: wrap; gap: 10px; padding: 8px 12px; }
+      .hint { display: none; }
+      .mode-btn { padding: 5px 10px; min-height: 36px; display: inline-flex; align-items: center; }
+      .fuzzy-btn { padding: 5px 10px; min-height: 36px; display: inline-flex; align-items: center; }
+      .inputs { height: 180px; }
+      .diff-cell { padding: 7px 8px; }
+      .diff-col-header-cell { padding: 5px 8px; }
+      .row-accept-left, .row-accept-right { padding: 3px 8px; font-size: 12px; }
+      .toolbar .fuzzy-btn, .toolbar .share-btn { min-height: 36px; }
+    }
+
+    /* ── Responsive: phone (≤480px) ── */
+    @media (max-width: 480px) {
+      /* Header — two rows via wrap */
+      header { gap: 6px 8px; padding: 8px 10px; }
+      h1 { font-size: 14px; }
+      .header-sep { display: none; }
+      .options-picker { margin-left: auto; }
+      .mode-group {
+        order: 10;
+        width: 100%;
+        gap: 4px;
+        margin-left: 0;
+      }
+      .mode-group .mode-btn {
+        flex: 1;
+        text-align: center;
+        justify-content: center;
+        padding: 8px 4px;
+        min-height: 44px;
+        font-size: 13px;
+      }
+      .fuzzy-btn { min-height: 44px; padding: 6px 10px; font-size: 13px; }
+
+      /* Inputs — stacked */
+      .inputs { flex-direction: column; height: auto; }
+      .input-panel { height: 130px; }
+      .input-panel:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+      textarea { font-size: 14px; }
+      .input-label { font-size: 11px; padding: 6px 10px; }
+
+      /* Toolbar — wrapping */
+      .toolbar { flex-wrap: wrap; gap: 6px; padding: 8px 10px; }
+      .stats { width: 100%; font-size: 12px; }
+      .toolbar .fuzzy-btn, .toolbar .share-btn {
+        min-height: 44px;
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+
+      /* Diff — stacked rows */
+      .diff-col-header { display: none; }
+      .diff-row {
+        flex-wrap: wrap;
+      }
+      .diff-cell {
+        flex: 1 1 100%;
+        border-right: none;
+        padding: 8px 10px;
+        font-size: 14px;
+      }
+      .diff-cell.left {
+        border-right: none;
+        border-left: 3px solid var(--color-old);
+      }
+      .diff-cell.right {
+        border-left: 3px solid var(--color-new);
+      }
+      .diff-cell.empty { display: none; }
+      .diff-row.equal .diff-cell.right { display: none; }
+      .diff-row.equal .diff-cell.left {
+        border-left: 3px solid var(--text-dim);
+      }
+
+      /* Accept buttons — static bar at bottom of row */
+      .row-accept-left, .row-accept-right {
+        position: static;
+        left: auto;
+        transform: none;
+        opacity: 1;
+        flex: 1;
+        text-align: center;
+        padding: 8px 16px;
+        font-size: 14px;
+        min-height: 40px;
+        border-radius: 0;
+        border-top: 1px solid var(--border);
+      }
+      .row-accept-left { border-right: 1px solid var(--border); }
+
+      /* Merge hint */
+      .merge-hint { font-size: 12px; padding: 10px; }
+
+      /* Merge panel */
+      #merge-panel { height: 200px; }
+      .merge-panel-header { padding: 8px 10px; gap: 6px; flex-wrap: wrap; }
+      .merge-undo-btn, .merge-copy-btn { min-height: 44px; padding: 6px 12px; font-size: 13px; }
+      #merge-text { font-size: 14px; padding: 10px; }
+      .mcb-left, .mcb-right { padding: 8px 12px; font-size: 13px; min-height: 44px; }
+
+      /* Dropdowns — larger touch targets */
+      .options-dropdown, .theme-dropdown { min-width: 200px; }
+      .theme-option { padding: 10px 12px; font-size: 14px; }
+      .theme-section-label { font-size: 10px; padding: 8px 8px 4px; }
+    }
+
+    /* ── Responsive: phone landscape ── */
+    @media (max-height: 480px) and (orientation: landscape) {
+      #merge-panel { height: 140px; }
+    }
   </style>
 </head>
 <body>
