@@ -2,7 +2,7 @@
 
 A browser-based text diff and merge tool. Compares two texts at the sentence, paragraph, clause, or line level — with word- or character-level inline highlighting within each changed pair — and lets you interactively build a merged result.
 
-No server. No installation. Open `index.html` and start comparing.
+No server. No installation. Open `index.html` and start comparing. Installable as a web app from Chrome, Edge, or Safari.
 
 ---
 
@@ -117,12 +117,12 @@ Click **share link** in the toolbar to copy the current URL. Anyone opening it s
 
 ## Architecture
 
-A single HTML file with two CDN dependencies:
+A single HTML file with two bundled dependencies (no CDN, fully offline):
 
-| Dependency | Purpose | Gzip size |
+| Dependency | Purpose | Size |
 |---|---|---|
-| [compromise.js](https://github.com/spencermountain/compromise) | Sentence and clause tokenization | ~132 KB |
-| [jsdiff](https://github.com/kpdecker/jsdiff) | LCS-based sequence and word/char diff | ~8 KB |
+| [compromise.js](https://github.com/spencermountain/compromise) v14.15.0 | Sentence and clause tokenization | 353 KB |
+| [jsdiff](https://github.com/kpdecker/jsdiff) v8.0.4 | LCS-based sequence and word/char diff | 30 KB |
 
 ### Diff pipeline
 
@@ -220,14 +220,21 @@ A shared link is a complete snapshot — the recipient sees the same diff and al
 
 ```
 differ/
-├── index.html   # entire application (self-contained, no build step)
-├── todo.md      # feature roadmap
-└── README.md    # this file
+├── index.html              # entire application (self-contained, no build step)
+├── compromise.min.js       # NLP tokenizer (bundled)
+├── diff.min.js             # diff engine (bundled)
+├── manifest.json           # PWA manifest
+├── sw.js                   # service worker (offline cache)
+├── icon.svg                # app icon (vector)
+├── icon-192.png            # app icon 192×192
+├── icon-512.png            # app icon 512×512
+├── icon-maskable-512.png   # app icon (maskable, Android adaptive)
+├── icon-maskable.svg       # maskable icon (vector)
+├── todo.md                 # feature roadmap
+└── README.md               # this file
 ```
 
-Open `index.html` directly in a browser. Sample text is preloaded. No build step, no local server needed.
-
-CDN links load compromise.js and jsdiff from unpkg. For offline use, both need to be bundled inline (see todo.md).
+Open `index.html` directly in a browser. Sample text is preloaded. No build step, no server needed. For PWA install (Add to Home Screen), serve via `localhost` or HTTPS.
 
 ---
 
@@ -243,6 +250,5 @@ See [todo.md](todo.md). Remaining items:
 
 **Publishing**
 - Mobile-friendly layout + unified single-column view
-- Web app compatibility (installable from browser)
-- Offline mode (bundle dependencies inline, no CDN)
 - Deploy to GitHub Pages
+- Chrome extension for comparing selected text across web pages

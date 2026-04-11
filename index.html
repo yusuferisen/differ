@@ -3,9 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#21252b">
+  <meta name="description" content="Compare texts at meaningful linguistic levels with word-level highlighting and interactive merging">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <title>differ</title>
-  <script src="https://unpkg.com/compromise@14.15.0/builds/compromise.min.js" integrity="sha384-lIQvxbxKNGZexiYjy/wIgdL9Bhhv92x6+vY9icxdg1wuGoLplyYvflYrfIzHo2ic" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/diff@8.0.4/dist/diff.min.js" integrity="sha384-P8czsgzqC9sMqYYGf7Ir0xELcYBVKJGXj3IMxJUzzi+YiDZ0/FBBNlVt0JCKjgU3" crossorigin="anonymous"></script>
+  <script src="compromise.min.js"></script>
+  <script src="diff.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1819,6 +1824,8 @@ function applyTheme(name) {
     vars = THEMES[name] ?? THEMES.dark;
   }
   Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
+  const tc = document.querySelector('meta[name="theme-color"]');
+  if (tc) tc.setAttribute('content', vars['--bg']);
 
   // Update selected state in dropdown
   document.querySelectorAll('#theme-dropdown .theme-option').forEach(btn => {
@@ -1937,6 +1944,8 @@ if (fromHash?.ms && Object.keys(fromHash.ms).length > 0) {
     updateMergePanel();
   }
 }
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
 </body>
 </html>

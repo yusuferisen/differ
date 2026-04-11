@@ -38,10 +38,16 @@
 ## Themes
 - [x] Theme picker: auto/light/dark + named themes (nord, solarized dark, dracula, github) via dropdown button
 
+## Pre-launch
+- [ ] Sample/placeholder text: remove or gate behind a dev-mode check before publishing. Investigate options — e.g. only pre-fill when served from `file://` or `localhost`, leave boxes empty when hosted on a public URL.
+
 ## Publishing / distribution
 - [ ] Mobile-friendly layout + unified view (stacked panels, single-column diff, touch-friendly controls)
-- [ ] Web app compatibility (so it can be saved as an app from Chrome browsers)
+- [x] Web app compatibility (so it can be saved as an app from Chrome browsers)
 - [ ] Responsive breakpoints for tablet/narrow viewports
-- [ ] Fully offline mode (bundle compromise.js + jsdiff inline, no CDN dependency)
+- [x] Fully offline mode (bundle compromise.js + jsdiff inline, no CDN dependency)
 - [ ] Deploy as static site (GitHub Pages / Cloudflare Pages / Netlify)
 - [x] Shareable URL (base64-encoded hash, "link" button copies URL, ~8KB limit)
+
+## Chrome extension
+- [ ] Context-menu extension (lives in `extension/` subdirectory): select text on any web page → right-click → "Set as original" or "Set as changed" → opens differ with both texts pre-loaded

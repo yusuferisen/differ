@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#21252b"/>
+  <!-- Left column: "old" lines -->
+  <rect x="80" y="140" width="160" height="14" rx="7" fill="#e06c75" opacity="0.7"/>
+  <rect x="80" y="180" width="130" height="14" rx="7" fill="#e06c75" opacity="0.4"/>
+  <rect x="80" y="220" width="150" height="14" rx="7" fill="#4b5263" opacity="0.5"/>
+  <rect x="80" y="260" width="120" height="14" rx="7" fill="#e06c75" opacity="0.7"/>
+  <rect x="80" y="300" width="145" height="14" rx="7" fill="#4b5263" opacity="0.5"/>
+  <rect x="80" y="340" width="110" height="14" rx="7" fill="#e06c75" opacity="0.4"/>
+  <!-- Right column: "new" lines -->
+  <rect x="272" y="140" width="160" height="14" rx="7" fill="#7ec699" opacity="0.7"/>
+  <rect x="272" y="180" width="140" height="14" rx="7" fill="#7ec699" opacity="0.4"/>
+  <rect x="272" y="220" width="150" height="14" rx="7" fill="#4b5263" opacity="0.5"/>
+  <rect x="272" y="260" width="130" height="14" rx="7" fill="#7ec699" opacity="0.7"/>
+  <rect x="272" y="300" width="145" height="14" rx="7" fill="#4b5263" opacity="0.5"/>
+  <rect x="272" y="340" width="155" height="14" rx="7" fill="#7ec699" opacity="0.4"/>
+  <!-- Divider -->
+  <line x1="256" y1="120" x2="256" y2="375" stroke="#61afef" stroke-width="3" opacity="0.6"/>
+</svg>
