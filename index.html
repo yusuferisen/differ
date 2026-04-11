@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>differ</title>
+  <script src="https://unpkg.com/compromise/builds/compromise.min.js"></script>
+  <script src="https://unpkg.com/diff/dist/diff.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #21252b;
+      --bg-panel:     #282c34;
+      --bg-input:     #1e2227;
+      --bg-merge:     #1a1d23;
+      --border:       #3e4451;
+      --text:         #abb2bf;
+      --text-bright:  #e6e6e6;
+      --text-dim:     #4b5263;
+      --text-mute:    #3e4451;
+      --accent:       #61afef;
+
+      --color-old:    #e06c75;
+      --color-new:    #7ec699;
+      --bg-old:       rgba(59, 32, 32, 0.55);
+      --bg-new:       rgba(26, 46, 26, 0.55);
+      --hl-old:       rgba(224, 108, 117, 0.38);
+      --hl-new:       rgba(126, 198, 153, 0.38);
+
+      --amber:        #e5c07b;
+      --amber-bg:     rgba(229, 192, 123, 0.18);
+      --amber-border: rgba(229, 192, 123, 0.25);
+      --purple:       #c678dd;
+      --purple-bg:    #c678dd22;
+
+      --settled-bg:   rgba(100, 100, 100, 0.15);
+      --rejected-bg:  rgba(100, 100, 100, 0.08);
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg:           #fafafa;
+        --bg-panel:     #f0f2f5;
+        --bg-input:     #ffffff;
+        --bg-merge:     #f5f5f5;
+        --border:       #d0d4db;
+        --text:         #383a42;
+        --text-bright:  #1a1a1a;
+        --text-dim:     #9a9fa9;
+        --text-mute:    #c0c4ce;
+        --accent:       #4078f2;
+
+        --color-old:    #ca1243;
+        --color-new:    #50a14f;
+        --bg-old:       rgba(202, 18, 67, 0.07);
+        --bg-new:       rgba(80, 161, 79, 0.07);
+        --hl-old:       rgba(202, 18, 67, 0.15);
+        --hl-new:       rgba(80, 161, 79, 0.15);
+
+        --amber:        #986801;
+        --amber-bg:     rgba(152, 104, 1, 0.1);
+        --amber-border: rgba(152, 104, 1, 0.25);
+        --purple:       #a626a4;
+        --purple-bg:    rgba(166, 38, 164, 0.08);
+
+        --settled-bg:   rgba(0, 0, 0, 0.06);
+        --rejected-bg:  rgba(0, 0, 0, 0.03);
+      }
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Menlo', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-panel);
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--color-new);
+      letter-spacing: 0.08em;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-left: 2px;
+    }
+
+    .mode-group {
+      display: flex;
+      gap: 3px;
+      margin-left: auto;
+    }
+
+    .mode-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 3px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      transition: all 0.12s;
+      user-select: none;
+    }
+
+    .mode-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .mode-btn:hover:not(.active) {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .header-sep {
+      width: 1px;
+      background: var(--border);
+      margin: 0 4px;
+      align-self: stretch;
+    }
+
+    .fuzzy-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 3px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      transition: all 0.12s;
+      user-select: none;
+    }
+
+    .fuzzy-btn.active {
+      background: var(--purple-bg);
+      border-color: var(--purple);
+      color: var(--purple);
+    }
+
+    .fuzzy-btn:hover:not(.active) {
+      border-color: var(--purple);
+      color: var(--purple);
+    }
+
+    /* ── Inputs ── */
+    .inputs {
+      display: flex;
+      height: 210px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .input-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .input-panel:first-child {
+      border-right: 1px solid var(--border);
+    }
+
+    .input-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 12px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-panel);
+      flex-shrink: 0;
+    }
+
+    .input-label.old { color: var(--color-old); }
+    .input-label.new { color: var(--color-new); }
+
+    .input-stats {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    textarea {
+      flex: 1;
+      background: var(--bg-input);
+      color: var(--text-bright);
+      border: none;
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: none;
+      outline: none;
+    }
+
+    textarea::placeholder { color: var(--text-mute); }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-panel);
+      flex-shrink: 0;
+    }
+
+    .stats {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .share-btn {
+      margin-left: auto;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: 2px 9px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 11px;
+      transition: all 0.12s;
+    }
+
+    .share-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Diff output ── */
+    #diff-output {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .diff-col-header {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-panel);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      flex-shrink: 0;
+    }
+
+    .diff-col-header-cell {
+      flex: 1;
+      padding: 5px 12px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .diff-col-header-cell.left {
+      color: var(--color-old);
+      border-right: 1px solid var(--border);
+    }
+
+    .diff-col-header-cell.right {
+      color: var(--color-new);
+    }
+
+    .diff-row {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      min-height: 28px;
+      position: relative;
+    }
+
+    .diff-row.equal { opacity: 0.45; }
+    .diff-row.equal:hover { opacity: 1; }
+
+    .diff-cell {
+      flex: 1;
+      padding: 7px 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .diff-cell.left {
+      border-right: 1px solid var(--border);
+    }
+
+    /* Row backgrounds */
+    .diff-row.removed .diff-cell.left  { background: var(--bg-old); }
+    .diff-row.added   .diff-cell.right { background: var(--bg-new); }
+
+    .diff-row.changed .diff-cell.left:not(.empty)  { background: var(--bg-old); }
+    .diff-row.changed .diff-cell.right:not(.empty) { background: var(--bg-new); }
+
+    /* Word highlights */
+    .word-old {
+      background: var(--hl-old);
+      color: var(--color-old);
+      border-radius: 2px;
+    }
+
+    .word-new {
+      background: var(--hl-new);
+      color: var(--color-new);
+      border-radius: 2px;
+    }
+
+    /* Placeholder / empty state */
+    .placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      color: var(--text-mute);
+      font-size: 12px;
+    }
+
+    /* Char-level highlights (used when char toggle is on) */
+    .char-old { background: var(--hl-old); color: var(--color-old); border-radius: 1px; }
+    .char-new { background: var(--hl-new); color: var(--color-new); border-radius: 1px; }
+
+    /* ── Merge span states ── */
+    .word-settled {
+      background: var(--settled-bg);
+      color: var(--text);
+      border-radius: 2px;
+    }
+
+    .word-rejected {
+      background: var(--rejected-bg);
+      color: var(--text);
+      opacity: 0.35;
+      text-decoration: line-through;
+      border-radius: 2px;
+    }
+
+    /* ── Accept-all row buttons ── */
+    .row-accept-left, .row-accept-right {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 10px;
+      padding: 1px 5px;
+      cursor: pointer;
+      border-radius: 3px;
+      opacity: 0;
+      transition: opacity 0.12s;
+      z-index: 2;
+      line-height: 1.4;
+      font-family: inherit;
+    }
+
+    .row-accept-left  { left: 50%; transform: translateY(-50%) translateX(calc(-100% - 2px)); }
+    .row-accept-right { left: 50%; transform: translateY(-50%) translateX(2px); }
+
+    .merge-hint {
+      padding: 7px 12px;
+      font-size: 11px;
+      color: var(--text-dim);
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      user-select: none;
+    }
+
+    .diff-row.changed:hover .row-accept-left,
+    .diff-row.changed:hover .row-accept-right { opacity: 0.6; }
+
+    .row-accept-left:hover,
+    .row-accept-right:hover { opacity: 1 !important; border-color: var(--text); }
+
+    /* ── Merge panel ── */
+    #merge-panel {
+      flex-shrink: 0;
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      border-top: 2px solid var(--border);
+      background: var(--bg-panel);
+    }
+
+    .merge-panel-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .merge-panel-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-new);
+    }
+
+    .merge-unresolved-badge { font-size: 11px; color: var(--amber); }
+
+    .merge-undo-btn {
+      margin-left: auto;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 3px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      transition: all 0.12s;
+    }
+
+    .merge-undo-btn:hover { border-color: var(--text); }
+
+    .merge-copy-btn {
+      background: var(--accent);
+      color: #fff;
+      border: 1px solid var(--accent);
+      padding: 3px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      transition: opacity 0.12s;
+    }
+
+    .merge-copy-btn:hover { opacity: 0.85; }
+
+    #merge-text {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: var(--bg-merge);
+      color: var(--text-bright);
+    }
+
+    .merge-conflict-inline {
+      background: var(--amber-bg);
+      color: var(--amber);
+      border-radius: 3px;
+      padding: 0 2px;
+    }
+
+    .merge-conflict-block {
+      border: 1px solid var(--amber-border);
+      border-radius: 4px;
+      margin: 4px 0;
+      overflow: hidden;
+      display: block;
+    }
+
+    .mcb-left, .mcb-right {
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      line-height: 1.5;
+      display: block;
+      transition: opacity 0.12s;
+    }
+
+    .mcb-left  { background: var(--bg-old); color: var(--color-old); border-bottom: 1px solid var(--amber-border); }
+    .mcb-right { background: var(--bg-new); color: var(--color-new); }
+    .mcb-left:hover, .mcb-right:hover { opacity: 0.8; }
+
+    /* ── Theme picker ── */
+    .theme-picker { position: relative; }
+
+    .theme-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px;
+      min-width: 140px;
+      z-index: 100;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+
+    .theme-section-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      padding: 4px 6px 2px;
+      user-select: none;
+    }
+
+    .theme-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 5px 0;
+    }
+
+    .theme-option {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .theme-option:hover { background: var(--border); }
+
+    .theme-option.selected {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Identical texts */
+    .identical-notice {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      color: var(--color-new);
+      font-size: 12px;
+      gap: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>differ</h1>
+  <span class="hint" id="hint">alt+M: cycle mode</span>
+  <div class="mode-group" id="mode-group">
+    <button class="mode-btn" data-mode="paragraph">paragraph</button>
+    <button class="mode-btn active" data-mode="sentence">sentence</button>
+    <button class="mode-btn" data-mode="clause">clause</button>
+    <button class="mode-btn" data-mode="line">line</button>
+  </div>
+  <div class="header-sep"></div>
+  <button class="fuzzy-btn" id="char-btn">char mode</button>
+  <button class="fuzzy-btn" id="fuzzy-btn">fuzzy matching</button>
+  <div class="header-sep"></div>
+  <button class="fuzzy-btn active" id="ignore-case-btn">ignore case</button>
+  <button class="fuzzy-btn" id="ignore-ws-btn">ignore ws</button>
+  <div class="header-sep"></div>
+  <div class="theme-picker" id="theme-picker">
+    <button class="fuzzy-btn" id="theme-btn">theme</button>
+    <div class="theme-dropdown" id="theme-dropdown" hidden>
+      <div class="theme-section-label">appearance</div>
+      <button class="theme-option" data-theme="auto">auto</button>
+      <button class="theme-option" data-theme="light">light</button>
+      <button class="theme-option" data-theme="dark">dark</button>
+      <div class="theme-divider"></div>
+      <div class="theme-section-label">themes</div>
+      <button class="theme-option" data-theme="nord">nord</button>
+      <button class="theme-option" data-theme="solarized-dark">solarized dark</button>
+      <button class="theme-option" data-theme="dracula">dracula</button>
+      <button class="theme-option" data-theme="github">github</button>
+    </div>
+  </div>
+</header>
+
+<div class="inputs">
+  <div class="input-panel">
+    <div class="input-label old">Original<span class="input-stats" id="stats-old"></span></div>
+    <textarea id="text-old" spellcheck="false">The annual Harlow Bridge festival draws thousands of visitors each summer.
+Local musicians perform on three open-air stages throughout the weekend.
+The event began in 1987 as a small community gathering and has since grown into one of the region's most celebrated traditions.
+
+Tickets for adults are priced at twenty dollars, with children under twelve admitted free.
+Parking is available at the riverside lot on Mill Street.
+Organizers recommend arriving before noon to secure a good spot near the main stage.</textarea>
+  </div>
+  <div class="input-panel">
+    <div class="input-label new">Modified<span class="input-stats" id="stats-new"></span></div>
+    <textarea id="text-new" spellcheck="false">The annual Harlow Bridge festival draws thousands of visitors each spring.
+Local musicians and artists perform on four open-air stages throughout the weekend.
+The event began in 1992 as a small community gathering and has since grown into one of the region's most beloved traditions.
+
+Tickets for adults are priced at twenty-five dollars, with children under ten admitted free.
+Parking is available at the riverside lot on Oak Street.
+Food vendors and craft stalls line the waterfront.
+Organizers recommend arriving before noon to secure a good spot near the main stage.</textarea>
+  </div>
+</div>
+
+<div class="toolbar">
+  <span class="stats" id="stats"></span>
+  <button class="share-btn" id="share-btn">link</button>
+</div>
+
+<div id="diff-output">
+  <div class="placeholder">Paste text above and click Compare</div>
+</div>
+
+<div id="merge-panel" style="display:none">
+  <div class="merge-panel-header">
+    <span class="merge-panel-title">merge result</span>
+    <span class="merge-unresolved-badge" id="unresolved-badge"></span>
+    <button class="merge-undo-btn" id="undo-btn" style="display:none">↩ undo</button>
+    <button class="merge-copy-btn" id="copy-btn">copy</button>
+  </div>
+  <div id="merge-text"></div>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// Input stats
+// ---------------------------------------------------------------------------
+function wordCount(text) {
+  return text.trim() ? text.trim().split(/\s+/).length : 0;
+}
+
+function updateInputStats(id, text) {
+  const words = wordCount(text);
+  const chars = text.length;
+  document.getElementById(id).textContent =
+    words ? `${words} words · ${chars} chars` : '';
+}
+
+// ---------------------------------------------------------------------------
+// Mode + fuzzy selection
+// ---------------------------------------------------------------------------
+let currentMode  = 'sentence';
+let fuzzyEnabled = false;
+let charEnabled  = false;
+let ignoreCase   = true;   // on by default
+let ignoreWS     = false;
+
+// Merge state
+let currentRows      = [];
+let mergeState       = {};    // {[segIdx]: {[chunkIdx]: 'left'|'right'|null}}
+let undoStack        = [];    // [{seg, chunk, prev}] or [{batch:true, seg, chunks}]
+let mergeActive      = false;
+let savedMergeStates = {};    // {[mode]: {mergeState, undoStack}} — persists across mode switches
+
+document.getElementById('mode-group').addEventListener('click', e => {
+  const btn = e.target.closest('.mode-btn');
+  if (!btn) return;
+  const newMode = btn.dataset.mode;
+  if (newMode === currentMode) return;
+
+  // Save current merge state before switching
+  if (mergeActive || Object.keys(mergeState).length > 0) {
+    savedMergeStates[currentMode] = {
+      mergeState: JSON.parse(JSON.stringify(mergeState)),
+      undoStack:  JSON.parse(JSON.stringify(undoStack)),
+    };
+  }
+
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentMode = newMode;
+  compare(); // calls resetMergeState() internally
+
+  // Restore saved state for this mode if it exists
+  const saved = savedMergeStates[newMode];
+  if (saved && Object.keys(saved.mergeState).length > 0) {
+    mergeState  = saved.mergeState;
+    undoStack   = saved.undoStack;
+    mergeActive = true;
+    hideMergeHint();
+    document.getElementById('merge-panel').style.display = 'flex';
+    reapplyMergeVisuals();
+    updateMergePanel();
+  }
+  updateHash();
+});
+
+const charBtn = document.getElementById('char-btn');
+charBtn.addEventListener('click', () => {
+  charEnabled = !charEnabled;
+  charBtn.classList.toggle('active', charEnabled);
+  savedMergeStates = {};
+  compare();
+  updateHash();
+});
+
+const fuzzyBtn = document.getElementById('fuzzy-btn');
+fuzzyBtn.addEventListener('click', () => {
+  fuzzyEnabled = !fuzzyEnabled;
+  fuzzyBtn.classList.toggle('active', fuzzyEnabled);
+  savedMergeStates = {};
+  compare();
+  updateHash();
+});
+
+document.getElementById('ignore-case-btn').addEventListener('click', function() {
+  ignoreCase = !ignoreCase;
+  this.classList.toggle('active', ignoreCase);
+  savedMergeStates = {};
+  compare();
+  updateHash();
+});
+
+document.getElementById('ignore-ws-btn').addEventListener('click', function() {
+  ignoreWS = !ignoreWS;
+  this.classList.toggle('active', ignoreWS);
+  savedMergeStates = {};
+  compare();
+  updateHash();
+});
+
+// Keyboard: Alt+M cycles split modes
+document.addEventListener('keydown', e => {
+  if (e.altKey && e.code === 'KeyM') {
+    e.preventDefault();
+    const modes = ['paragraph', 'sentence', 'clause', 'line'];
+    const next  = modes[(modes.indexOf(currentMode) + 1) % modes.length];
+    document.querySelector(`[data-mode="${next}"]`).click();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Text splitting
+// ---------------------------------------------------------------------------
+function splitText(text, mode) {
+  if (!text.trim()) return [];
+
+  switch (mode) {
+    case 'sentence':
+      try {
+        const sentences = nlp(text).sentences().out('array').filter(s => s.trim());
+        return sentences.length > 0 ? sentences : [text.trim()];
+      } catch {
+        // fallback: punctuation-based split
+        return text.split(/(?<=[.!?])\s+/).filter(s => s.trim());
+      }
+
+    case 'paragraph':
+      return text.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+
+    case 'clause': {
+      try {
+        const raw = nlp(text).clauses().out('array').filter(s => s.trim());
+        if (raw.length === 0) return [text.trim()];
+        // Merge clauses under 4 words into their predecessor to avoid fragments like "which", "that"
+        const merged = [];
+        for (const clause of raw) {
+          const wc = (clause.match(/\w+/g) || []).length;
+          if (wc < 4 && merged.length > 0) merged[merged.length - 1] += ' ' + clause;
+          else merged.push(clause);
+        }
+        return merged.filter(Boolean);
+      } catch {
+        return text.split(/(?<=[.!?])\s+/).filter(s => s.trim());
+      }
+    }
+
+    case 'line':
+      return text.split('\n').filter(s => s.trim());
+
+    default:
+      return [text.trim()];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Fuzzy matching helpers
+// ---------------------------------------------------------------------------
+const FUZZY_THRESHOLD = 0.25;
+
+function jaccardSimilarity(a, b) {
+  const wa = new Set((a.toLowerCase().match(/\w+/g) || []));
+  const wb = new Set((b.toLowerCase().match(/\w+/g) || []));
+  if (wa.size === 0 && wb.size === 0) return 1;
+  if (wa.size === 0 || wb.size === 0) return 0;
+  let intersection = 0;
+  for (const w of wa) if (wb.has(w)) intersection++;
+  return intersection / (wa.size + wb.size - intersection);
+}
+
+function segmentSimilarity(a, b) {
+  const jaccard = jaccardSimilarity(a, b);
+  const firstWord = s => (s.toLowerCase().match(/\b\w+/) || [''])[0];
+  const firstWordBonus = firstWord(a) === firstWord(b) && firstWord(a) !== '' ? 1 : 0;
+  const wA = (a.match(/\w+/g) || []).length;
+  const wB = (b.match(/\w+/g) || []).length;
+  const lengthSim = (wA === 0 && wB === 0) ? 1 : Math.min(wA, wB) / Math.max(wA, wB);
+  return 0.6 * jaccard + 0.2 * firstWordBonus + 0.2 * lengthSim;
+}
+
+// Given two unmatched blocks, greedily pair by similarity instead of position.
+function fuzzyPairBlocks(removed, added) {
+  const rows = [];
+  const usedAdded = new Set();
+
+  for (const rem of removed) {
+    let bestScore = -1;
+    let bestIdx   = -1;
+    for (let i = 0; i < added.length; i++) {
+      if (usedAdded.has(i)) continue;
+      const score = segmentSimilarity(rem, added[i]);
+      if (score > bestScore) { bestScore = score; bestIdx = i; }
+    }
+    if (bestScore >= FUZZY_THRESHOLD && bestIdx >= 0) {
+      usedAdded.add(bestIdx);
+      rows.push({ type: 'changed', left: rem, right: added[bestIdx] });
+    } else {
+      rows.push({ type: 'removed', left: rem, right: null });
+    }
+  }
+
+  // Remaining unmatched added segments
+  for (let i = 0; i < added.length; i++) {
+    if (!usedAdded.has(i)) {
+      rows.push({ type: 'added', left: null, right: added[i] });
+    }
+  }
+
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// Diff computation
+// ---------------------------------------------------------------------------
+function norm(s) {
+  if (ignoreWS) s = s.replace(/\s+/g, ' ').trim();
+  if (ignoreCase) s = s.toLowerCase();
+  return s;
+}
+
+function computeDiff(segs1, segs2, fuzzy = false) {
+  const comparator = (ignoreCase || ignoreWS)
+    ? (a, b) => norm(a) === norm(b)
+    : undefined;
+  const chunks = Diff.diffArrays(segs1, segs2, comparator ? { comparator } : {});
+  const rows = [];
+
+  let i = 0;
+  while (i < chunks.length) {
+    const chunk = chunks[i];
+    const next  = chunks[i + 1];
+
+    if (!chunk.added && !chunk.removed) {
+      for (const seg of chunk.value) {
+        rows.push({ type: 'equal', left: seg, right: seg });
+      }
+      i++;
+    } else if (chunk.removed && next && next.added) {
+      const removed = chunk.value;
+      const added   = next.value;
+      if (fuzzy) {
+        rows.push(...fuzzyPairBlocks(removed, added));
+      } else {
+        const len = Math.max(removed.length, added.length);
+        for (let k = 0; k < len; k++) {
+          rows.push({
+            type:  'changed',
+            left:  removed[k] ?? null,
+            right: added[k]   ?? null,
+          });
+        }
+      }
+      i += 2;
+    } else if (chunk.removed) {
+      for (const seg of chunk.value) {
+        rows.push({ type: 'removed', left: seg, right: null });
+      }
+      i++;
+    } else {
+      for (const seg of chunk.value) {
+        rows.push({ type: 'added', left: null, right: seg });
+      }
+      i++;
+    }
+  }
+
+  // Annotate changed rows with segIdx and precomputed parts
+  let segCounter = 0;
+  for (const row of rows) {
+    if (row.type === 'changed' && row.left && row.right) {
+      row.segIdx = segCounter++;
+      const diffOpts = ignoreCase ? { ignoreCase: true } : {};
+      const la = ignoreWS ? row.left.replace(/\s+/g, ' ').trim() : row.left;
+      const ra = ignoreWS ? row.right.replace(/\s+/g, ' ').trim() : row.right;
+      row.parts  = charEnabled
+        ? Diff.diffChars(la, ra, diffOpts)
+        : Diff.diffWords(la, ra, diffOpts);
+      row.chunkCount = countChunks(row.parts);
+    }
+  }
+
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// Rendering
+// ---------------------------------------------------------------------------
+function renderWordDiff(parts, side) {
+  const frag = document.createDocumentFragment();
+  for (const part of parts) {
+    if (part.removed && side === 'right') continue;
+    if (part.added  && side === 'left')  continue;
+    const span = document.createElement('span');
+    span.textContent = part.value;
+    if (part.removed) span.className = 'word-old';
+    else if (part.added) span.className = 'word-new';
+    frag.appendChild(span);
+  }
+  return frag;
+}
+
+function renderCharDiff(parts, side) {
+  const frag = document.createDocumentFragment();
+  for (const part of parts) {
+    if (part.removed && side === 'right') continue;
+    if (part.added  && side === 'left')  continue;
+    const span = document.createElement('span');
+    span.textContent = part.value;
+    if (part.removed) span.className = 'char-old';
+    else if (part.added) span.className = 'char-new';
+    frag.appendChild(span);
+  }
+  return frag;
+}
+
+
+// ---------------------------------------------------------------------------
+// Merge rendering helpers
+// ---------------------------------------------------------------------------
+function resolveSpanClass(baseClass, decision, side) {
+  if (decision === null)  return baseClass;
+  if (decision === side)  return 'word-settled';
+  return 'word-rejected';
+}
+
+function makeHighlightSpan(value, baseClass, segIdx, chunkIdx, side) {
+  const span = document.createElement('span');
+  span.textContent    = value;
+  span.dataset.seg    = segIdx;
+  span.dataset.chunk  = chunkIdx;
+  span.dataset.side   = side;
+  span.dataset.base   = baseClass;
+  span.className = resolveSpanClass(baseClass, mergeState[segIdx]?.[chunkIdx] ?? null, side);
+  return span;
+}
+
+// Renders highlighted parts with merge data-attrs. Same chunkIdx logic for both sides.
+function renderHighlightedDiff(parts, side, segIdx) {
+  const baseOld = charEnabled ? 'char-old' : 'word-old';
+  const baseNew = charEnabled ? 'char-new' : 'word-new';
+  const frag = document.createDocumentFragment();
+  let chunkIdx = 0;
+
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    const nextIsAdded = i + 1 < parts.length && parts[i + 1].added;
+
+    if (!part.removed && !part.added) {
+      frag.appendChild(document.createTextNode(part.value));
+    } else if (part.removed) {
+      if (side === 'left') {
+        frag.appendChild(makeHighlightSpan(part.value, baseOld, segIdx, chunkIdx, 'left'));
+      }
+      if (!nextIsAdded) chunkIdx++;
+    } else { // added
+      if (side === 'right') {
+        frag.appendChild(makeHighlightSpan(part.value, baseNew, segIdx, chunkIdx, 'right'));
+      }
+      chunkIdx++;
+    }
+  }
+
+  return frag;
+}
+
+function countChunks(parts) {
+  let count = 0;
+  for (let i = 0; i < parts.length; i++) {
+    const nextIsAdded = i + 1 < parts.length && parts[i + 1].added;
+    if (parts[i].removed && !nextIsAdded) count++;
+    else if (parts[i].added) count++;
+  }
+  return count;
+}
+
+function updateSpansForChunk(segIdx, chunkIdx) {
+  const decision = mergeState[segIdx]?.[chunkIdx] ?? null;
+  document.querySelectorAll(`#diff-output [data-seg="${segIdx}"][data-chunk="${chunkIdx}"]`)
+    .forEach(span => {
+      span.className = resolveSpanClass(span.dataset.base, decision, span.dataset.side);
+    });
+}
+
+function makeCell(row, side) {
+  const cell = document.createElement('div');
+  cell.className = `diff-cell ${side}`;
+  const text = side === 'left' ? row.left : row.right;
+
+  if (!text) {
+    cell.classList.add('empty');
+    return cell;
+  }
+
+  if (row.type === 'equal') {
+    cell.textContent = text;
+  } else if (row.type === 'changed' && row.left && row.right) {
+    cell.appendChild(renderHighlightedDiff(row.parts, side, row.segIdx));
+  } else {
+    cell.textContent = text;
+  }
+
+  return cell;
+}
+
+function renderDiff(rows) {
+  const output = document.getElementById('diff-output');
+  const stats  = document.getElementById('stats');
+  output.innerHTML = '';
+
+  if (rows.length === 0) {
+    output.innerHTML = '<div class="placeholder">No segments found — try a different split mode.</div>';
+    stats.textContent = '';
+    return;
+  }
+
+  const changedCount = rows.filter(r => r.type !== 'equal').length;
+
+  if (changedCount === 0) {
+    output.innerHTML = '<div class="identical-notice">✓ texts are identical</div>';
+    stats.textContent = `${rows.length} segments · identical`;
+    return;
+  }
+
+  stats.textContent =
+    `${rows.length} segments · ${changedCount} changed · ${rows.length - changedCount} equal`;
+
+  // Sticky column headers
+  const colHeader = document.createElement('div');
+  colHeader.className = 'diff-col-header';
+  colHeader.innerHTML =
+    '<div class="diff-col-header-cell left">Original</div>' +
+    '<div class="diff-col-header-cell right">Modified</div>';
+  output.appendChild(colHeader);
+
+  const hint = document.createElement('div');
+  hint.className = 'merge-hint';
+  hint.id = 'merge-hint';
+  hint.textContent = 'tap any highlighted word to accept that version · use « » to accept an entire row';
+  output.appendChild(hint);
+
+  for (const row of rows) {
+    const div = document.createElement('div');
+    div.className = `diff-row ${row.type}`;
+    div.appendChild(makeCell(row, 'left'));
+    div.appendChild(makeCell(row, 'right'));
+
+    if (row.type === 'changed' && row.segIdx !== undefined) {
+      const btnL = document.createElement('button');
+      btnL.className = 'row-accept-left';
+      btnL.textContent = '«';
+      btnL.dataset.seg   = row.segIdx;
+      btnL.dataset.side  = 'left';
+      btnL.dataset.count = row.chunkCount;
+
+      const btnR = document.createElement('button');
+      btnR.className = 'row-accept-right';
+      btnR.textContent = '»';
+      btnR.dataset.seg   = row.segIdx;
+      btnR.dataset.side  = 'right';
+      btnR.dataset.count = row.chunkCount;
+
+      div.appendChild(btnL);
+      div.appendChild(btnR);
+    }
+
+    output.appendChild(div);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Merge logic
+// ---------------------------------------------------------------------------
+function hideMergeHint() {
+  document.getElementById('merge-hint')?.remove();
+}
+
+function reapplyMergeVisuals() {
+  document.querySelectorAll('#diff-output [data-seg][data-chunk]').forEach(span => {
+    const decision = mergeState[+span.dataset.seg]?.[+span.dataset.chunk] ?? null;
+    span.className = resolveSpanClass(span.dataset.base, decision, span.dataset.side);
+  });
+}
+
+function resetMergeState() {
+  mergeState  = {};
+  undoStack   = [];
+  mergeActive = false;
+  document.getElementById('merge-panel').style.display = 'none';
+}
+
+function applyMergeDecision(seg, chunk, side, skipUndo) {
+  const prev = mergeState[seg]?.[chunk] ?? null;
+  const next = (prev === side) ? null : side; // toggle off if same side
+
+  if (!skipUndo) {
+    undoStack.push({ seg, chunk, prev });
+    if (undoStack.length > 20) undoStack.shift();
+  }
+
+  if (!mergeState[seg]) mergeState[seg] = {};
+  mergeState[seg][chunk] = next;
+
+  if (!mergeActive) {
+    mergeActive = true;
+    hideMergeHint();
+    document.getElementById('merge-panel').style.display = 'flex';
+  }
+
+  updateSpansForChunk(seg, chunk);
+  updateMergePanel();
+  updateHash();
+}
+
+function computeMergedParts() {
+  const tokens = [];
+
+  for (const row of currentRows) {
+    if (row.type === 'equal') {
+      tokens.push({ type: 'text', text: row.left });
+    } else if (row.type === 'removed') {
+      tokens.push({ type: 'text', text: row.left });
+    } else if (row.type === 'added') {
+      tokens.push({ type: 'text', text: row.right });
+    } else if (row.type === 'changed' && row.left && row.right) {
+      const { segIdx, parts } = row;
+      let chunkIdx = 0;
+
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        const nextIsAdded = i + 1 < parts.length && parts[i + 1].added;
+
+        if (!part.removed && !part.added) {
+          tokens.push({ type: 'text', text: part.value });
+        } else if (part.removed) {
+          if (!nextIsAdded) {
+            // Pure removal
+            const dec = mergeState[segIdx]?.[chunkIdx] ?? null;
+            if (dec === 'left') {
+              tokens.push({ type: 'text', text: part.value });
+            } else if (dec === null) {
+              tokens.push({ type: 'unresolved', old: part.value, new: null,
+                long: part.value.length > 80, segIdx, chunkIdx });
+            }
+            // dec === 'right': omit (exclude the old text)
+            chunkIdx++;
+          }
+          // if nextIsAdded, the 'added' branch handles it
+        } else { // added
+          const prevIsRemoved = i > 0 && parts[i - 1].removed;
+          const oldVal = prevIsRemoved ? parts[i - 1].value : null;
+          const newVal = part.value;
+          const dec = mergeState[segIdx]?.[chunkIdx] ?? null;
+
+          if (oldVal !== null) {
+            // Pair (replacement)
+            if (dec === 'left') {
+              tokens.push({ type: 'text', text: oldVal });
+            } else if (dec === 'right') {
+              tokens.push({ type: 'text', text: newVal });
+            } else {
+              tokens.push({ type: 'unresolved', old: oldVal, new: newVal,
+                long: (oldVal.length + newVal.length) > 80, segIdx, chunkIdx });
+            }
+          } else {
+            // Pure insertion
+            if (dec === 'right') {
+              tokens.push({ type: 'text', text: newVal });
+            } else if (dec === null) {
+              tokens.push({ type: 'unresolved', old: null, new: newVal,
+                long: newVal.length > 80, segIdx, chunkIdx });
+            }
+            // dec === 'left': omit (exclude the insertion)
+          }
+          chunkIdx++;
+        }
+      }
+    }
+
+    tokens.push({ type: 'text', text: '\n' });
+  }
+
+  return tokens;
+}
+
+function updateMergePanel() {
+  const tokens    = computeMergedParts();
+  const mergeText = document.getElementById('merge-text');
+  mergeText.innerHTML = '';
+  let unresolvedCount = 0;
+
+  for (const token of tokens) {
+    if (token.type === 'text') {
+      mergeText.appendChild(document.createTextNode(token.text));
+    } else {
+      unresolvedCount++;
+      const oldText = token.old ?? '';
+      const newText = token.new ?? '';
+
+      if (token.long) {
+        const block = document.createElement('div');
+        block.className = 'merge-conflict-block';
+
+        if (oldText) {
+          const d = document.createElement('div');
+          d.className = 'mcb-left';
+          d.textContent = '← ' + oldText;
+          d.dataset.resolveSeg   = token.segIdx;
+          d.dataset.resolveChunk = token.chunkIdx;
+          d.dataset.resolveSide  = 'left';
+          block.appendChild(d);
+        }
+        if (newText) {
+          const d = document.createElement('div');
+          d.className = 'mcb-right';
+          d.textContent = '→ ' + newText;
+          d.dataset.resolveSeg   = token.segIdx;
+          d.dataset.resolveChunk = token.chunkIdx;
+          d.dataset.resolveSide  = 'right';
+          block.appendChild(d);
+        }
+        mergeText.appendChild(block);
+      } else {
+        const display = oldText && newText ? `{${oldText}|${newText}}`
+          : oldText ? `{${oldText}|}` : `{|${newText}}`;
+        const span = document.createElement('span');
+        span.className = 'merge-conflict-inline';
+        span.textContent = display;
+        mergeText.appendChild(span);
+      }
+    }
+  }
+
+  document.getElementById('unresolved-badge').textContent =
+    unresolvedCount > 0 ? `${unresolvedCount} unresolved` : '';
+  document.getElementById('undo-btn').style.display =
+    undoStack.length > 0 ? '' : 'none';
+}
+
+// Click: highlighted spans in diff table → merge decision
+document.getElementById('diff-output').addEventListener('click', e => {
+  // Accept-all buttons
+  const acceptBtn = e.target.closest('.row-accept-left, .row-accept-right');
+  if (acceptBtn) {
+    const seg   = +acceptBtn.dataset.seg;
+    const side  = acceptBtn.dataset.side;
+    const count = +acceptBtn.dataset.count;
+    const chunks = [];
+    for (let c = 0; c < count; c++) {
+      chunks.push({ chunkIdx: c, prev: mergeState[seg]?.[c] ?? null });
+    }
+    undoStack.push({ batch: true, seg, chunks });
+    if (undoStack.length > 20) undoStack.shift();
+    if (!mergeState[seg]) mergeState[seg] = {};
+    for (let c = 0; c < count; c++) {
+      mergeState[seg][c] = side;
+      updateSpansForChunk(seg, c);
+    }
+    if (!mergeActive) {
+      mergeActive = true;
+      hideMergeHint();
+      document.getElementById('merge-panel').style.display = 'flex';
+    }
+    updateMergePanel();
+    updateHash();
+    return;
+  }
+
+  // Individual span clicks
+  const span = e.target.closest('[data-seg][data-chunk]');
+  if (!span) return;
+  applyMergeDecision(+span.dataset.seg, +span.dataset.chunk, span.dataset.side);
+});
+
+// Click: block-format conflicts in merge panel
+document.getElementById('merge-panel').addEventListener('click', e => {
+  const el = e.target.closest('[data-resolve-seg]');
+  if (!el) return;
+  applyMergeDecision(+el.dataset.resolveSeg, +el.dataset.resolveChunk, el.dataset.resolveSide);
+});
+
+// Undo
+document.getElementById('undo-btn').addEventListener('click', () => {
+  const entry = undoStack.pop();
+  if (!entry) return;
+  if (entry.batch) {
+    for (const { chunkIdx, prev } of entry.chunks) {
+      if (!mergeState[entry.seg]) mergeState[entry.seg] = {};
+      mergeState[entry.seg][chunkIdx] = prev;
+      updateSpansForChunk(entry.seg, chunkIdx);
+    }
+  } else {
+    if (!mergeState[entry.seg]) mergeState[entry.seg] = {};
+    mergeState[entry.seg][entry.chunk] = entry.prev;
+    updateSpansForChunk(entry.seg, entry.chunk);
+  }
+  updateMergePanel();
+  updateHash();
+});
+
+// Copy merged result
+document.getElementById('copy-btn').addEventListener('click', () => {
+  const tokens = computeMergedParts();
+  let text = '';
+  for (const token of tokens) {
+    if (token.type === 'text') {
+      text += token.text;
+    } else {
+      const o = token.old ?? '';
+      const n = token.new ?? '';
+      text += o && n ? `{${o}|${n}}` : o ? `{${o}|}` : `{|${n}}`;
+    }
+  }
+  const clean = text.replace(/\n+$/, '');
+  const btn = document.getElementById('copy-btn');
+  const confirm = () => {
+    btn.textContent = 'copied!';
+    btn.style.background = 'var(--color-new)';
+    setTimeout(() => { btn.textContent = 'copy'; btn.style.background = ''; }, 1500);
+  };
+  navigator.clipboard.writeText(clean).then(confirm).catch(() => {
+    const ta = Object.assign(document.createElement('textarea'), { value: clean });
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    confirm();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Compare action
+// ---------------------------------------------------------------------------
+function compare() {
+  const oldText = document.getElementById('text-old').value;
+  const newText = document.getElementById('text-new').value;
+  const output  = document.getElementById('diff-output');
+  const stats   = document.getElementById('stats');
+
+  if (!oldText.trim() || !newText.trim()) {
+    output.innerHTML = '<div class="placeholder">Paste text in either box above</div>';
+    stats.textContent = '';
+    resetMergeState();
+    return;
+  }
+
+  const segs1 = splitText(oldText, currentMode);
+  const segs2 = splitText(newText, currentMode);
+  const rows  = computeDiff(segs1, segs2, fuzzyEnabled);
+  resetMergeState();
+  currentRows = rows;
+  renderDiff(rows);
+}
+
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
+}
+
+const debouncedCompare = debounce(compare, 180);
+
+const textOld = document.getElementById('text-old');
+const textNew = document.getElementById('text-new');
+
+textOld.addEventListener('input', () => {
+  updateInputStats('stats-old', textOld.value);
+  savedMergeStates = {};
+  debouncedCompare();
+});
+
+textNew.addEventListener('input', () => {
+  updateInputStats('stats-new', textNew.value);
+  savedMergeStates = {};
+  debouncedCompare();
+});
+
+// ---------------------------------------------------------------------------
+// Shareable URL (hash encoding)
+// ---------------------------------------------------------------------------
+function encodeForHash() {
+  try {
+    const state = {
+      o:  textOld.value,
+      n:  textNew.value,
+      md: currentMode,
+      fz: fuzzyEnabled,
+      ch: charEnabled,
+      ic: ignoreCase,
+      iw: ignoreWS,
+    };
+    const ms = mergeState;
+    if (Object.keys(ms).length > 0) state.ms = ms;
+    return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+  } catch { return ''; }
+}
+
+function decodeFromHash() {
+  try {
+    const raw = location.hash.slice(1);
+    if (!raw) return null;
+    const p = JSON.parse(decodeURIComponent(escape(atob(raw))));
+    if (typeof p.o === 'string' && typeof p.n === 'string') return p;
+    return null;
+  } catch { return null; }
+}
+
+function updateHash() {
+  if (!textOld.value && !textNew.value) {
+    history.replaceState(null, '', location.pathname + location.search);
+    return;
+  }
+  const encoded = encodeForHash();
+  if (encoded && ('#' + encoded).length < 8000) {
+    history.replaceState(null, '', '#' + encoded);
+  }
+}
+const debouncedHashUpdate = debounce(updateHash, 600);
+
+textOld.addEventListener('input', debouncedHashUpdate);
+textNew.addEventListener('input', debouncedHashUpdate);
+
+document.getElementById('share-btn').addEventListener('click', () => {
+  const encoded = encodeForHash();
+  const url = location.origin + location.pathname + (encoded ? '#' + encoded : '');
+  const btn = document.getElementById('share-btn');
+
+  if (('#' + encoded).length >= 8000) {
+    const kb = (('#' + encoded).length / 1024).toFixed(1);
+    btn.textContent = `${kb}KB > 8KB max`;
+    setTimeout(() => { btn.textContent = 'link'; }, 2500);
+    return;
+  }
+
+  const flash = msg => { btn.textContent = msg; setTimeout(() => { btn.textContent = 'link'; }, 1500); };
+  navigator.clipboard.writeText(url).then(() => flash('copied!')).catch(() => {
+    const ta = Object.assign(document.createElement('textarea'), { value: url });
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    flash('copied!');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Theme system
+// ---------------------------------------------------------------------------
+const THEMES = {
+  dark: {
+    '--bg':'#21252b','--bg-panel':'#282c34','--bg-input':'#1e2227','--bg-merge':'#1a1d23',
+    '--border':'#3e4451','--text':'#abb2bf','--text-bright':'#e6e6e6',
+    '--text-dim':'#4b5263','--text-mute':'#3e4451','--accent':'#61afef',
+    '--color-old':'#e06c75','--color-new':'#7ec699',
+    '--bg-old':'rgba(59,32,32,0.55)','--bg-new':'rgba(26,46,26,0.55)',
+    '--hl-old':'rgba(224,108,117,0.38)','--hl-new':'rgba(126,198,153,0.38)',
+    '--amber':'#e5c07b','--amber-bg':'rgba(229,192,123,0.18)','--amber-border':'rgba(229,192,123,0.25)',
+    '--purple':'#c678dd','--purple-bg':'#c678dd22',
+    '--settled-bg':'rgba(100,100,100,0.15)','--rejected-bg':'rgba(100,100,100,0.08)',
+  },
+  light: {
+    '--bg':'#fafafa','--bg-panel':'#f0f2f5','--bg-input':'#ffffff','--bg-merge':'#f5f5f5',
+    '--border':'#d0d4db','--text':'#383a42','--text-bright':'#1a1a1a',
+    '--text-dim':'#9a9fa9','--text-mute':'#c0c4ce','--accent':'#4078f2',
+    '--color-old':'#ca1243','--color-new':'#50a14f',
+    '--bg-old':'rgba(202,18,67,0.07)','--bg-new':'rgba(80,161,79,0.07)',
+    '--hl-old':'rgba(202,18,67,0.15)','--hl-new':'rgba(80,161,79,0.15)',
+    '--amber':'#986801','--amber-bg':'rgba(152,104,1,0.1)','--amber-border':'rgba(152,104,1,0.25)',
+    '--purple':'#a626a4','--purple-bg':'rgba(166,38,164,0.08)',
+    '--settled-bg':'rgba(0,0,0,0.06)','--rejected-bg':'rgba(0,0,0,0.03)',
+  },
+  nord: {
+    '--bg':'#2e3440','--bg-panel':'#3b4252','--bg-input':'#292e39','--bg-merge':'#242933',
+    '--border':'#434c5e','--text':'#d8dee9','--text-bright':'#eceff4',
+    '--text-dim':'#616e88','--text-mute':'#434c5e','--accent':'#88c0d0',
+    '--color-old':'#bf616a','--color-new':'#a3be8c',
+    '--bg-old':'rgba(191,97,106,0.2)','--bg-new':'rgba(163,190,140,0.2)',
+    '--hl-old':'rgba(191,97,106,0.35)','--hl-new':'rgba(163,190,140,0.35)',
+    '--amber':'#ebcb8b','--amber-bg':'rgba(235,203,139,0.15)','--amber-border':'rgba(235,203,139,0.25)',
+    '--purple':'#b48ead','--purple-bg':'rgba(180,142,173,0.15)',
+    '--settled-bg':'rgba(100,100,100,0.15)','--rejected-bg':'rgba(100,100,100,0.08)',
+  },
+  'solarized-dark': {
+    '--bg':'#002b36','--bg-panel':'#073642','--bg-input':'#001f27','--bg-merge':'#001920',
+    '--border':'#1c4c58','--text':'#839496','--text-bright':'#eee8d5',
+    '--text-dim':'#586e75','--text-mute':'#1c4c58','--accent':'#268bd2',
+    '--color-old':'#dc322f','--color-new':'#859900',
+    '--bg-old':'rgba(220,50,47,0.15)','--bg-new':'rgba(133,153,0,0.15)',
+    '--hl-old':'rgba(220,50,47,0.3)','--hl-new':'rgba(133,153,0,0.3)',
+    '--amber':'#b58900','--amber-bg':'rgba(181,137,0,0.15)','--amber-border':'rgba(181,137,0,0.25)',
+    '--purple':'#6c71c4','--purple-bg':'rgba(108,113,196,0.15)',
+    '--settled-bg':'rgba(100,100,100,0.15)','--rejected-bg':'rgba(100,100,100,0.08)',
+  },
+  dracula: {
+    '--bg':'#282a36','--bg-panel':'#21222c','--bg-input':'#1e1f29','--bg-merge':'#191a23',
+    '--border':'#44475a','--text':'#f8f8f2','--text-bright':'#ffffff',
+    '--text-dim':'#6272a4','--text-mute':'#44475a','--accent':'#8be9fd',
+    '--color-old':'#ff5555','--color-new':'#50fa7b',
+    '--bg-old':'rgba(255,85,85,0.15)','--bg-new':'rgba(80,250,123,0.12)',
+    '--hl-old':'rgba(255,85,85,0.3)','--hl-new':'rgba(80,250,123,0.25)',
+    '--amber':'#ffb86c','--amber-bg':'rgba(255,184,108,0.15)','--amber-border':'rgba(255,184,108,0.25)',
+    '--purple':'#bd93f9','--purple-bg':'rgba(189,147,249,0.15)',
+    '--settled-bg':'rgba(100,100,100,0.15)','--rejected-bg':'rgba(100,100,100,0.08)',
+  },
+  github: {
+    '--bg':'#ffffff','--bg-panel':'#f6f8fa','--bg-input':'#ffffff','--bg-merge':'#f6f8fa',
+    '--border':'#d0d7de','--text':'#24292f','--text-bright':'#1f2328',
+    '--text-dim':'#8c959f','--text-mute':'#d0d7de','--accent':'#0969da',
+    '--color-old':'#cf222e','--color-new':'#1a7f37',
+    '--bg-old':'rgba(207,34,46,0.06)','--bg-new':'rgba(26,127,55,0.06)',
+    '--hl-old':'rgba(207,34,46,0.14)','--hl-new':'rgba(26,127,55,0.14)',
+    '--amber':'#9a6700','--amber-bg':'rgba(154,103,0,0.1)','--amber-border':'rgba(154,103,0,0.25)',
+    '--purple':'#8250df','--purple-bg':'rgba(130,80,223,0.1)',
+    '--settled-bg':'rgba(0,0,0,0.06)','--rejected-bg':'rgba(0,0,0,0.03)',
+  },
+};
+
+let currentTheme = localStorage.getItem('differ-theme') || 'auto';
+
+function applyTheme(name) {
+  currentTheme = name;
+  localStorage.setItem('differ-theme', name);
+  const root = document.documentElement;
+
+  // Clear any inline variable overrides
+  Object.keys(THEMES.dark).forEach(k => root.style.removeProperty(k));
+
+  if (name !== 'auto') {
+    const vars = THEMES[name] ?? THEMES.dark;
+    Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
+  }
+
+  // Update selected state in dropdown
+  document.querySelectorAll('.theme-option').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.theme === name);
+  });
+}
+
+// Dropdown toggle
+const themeBtn      = document.getElementById('theme-btn');
+const themeDropdown = document.getElementById('theme-dropdown');
+
+themeBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  themeDropdown.hidden = !themeDropdown.hidden;
+});
+
+themeDropdown.addEventListener('click', e => {
+  const opt = e.target.closest('.theme-option');
+  if (!opt) return;
+  applyTheme(opt.dataset.theme);
+  themeDropdown.hidden = true;
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#theme-picker')) themeDropdown.hidden = true;
+});
+
+// Apply saved theme on load
+applyTheme(currentTheme);
+
+// Initialize: restore full session from hash if present, otherwise use sample text
+const fromHash = decodeFromHash();
+if (fromHash) {
+  textOld.value = fromHash.o ?? '';
+  textNew.value = fromHash.n ?? '';
+
+  // Restore split mode
+  const validModes = ['paragraph', 'sentence', 'clause', 'line'];
+  if (fromHash.md && validModes.includes(fromHash.md)) {
+    currentMode = fromHash.md;
+    document.querySelectorAll('.mode-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.mode === currentMode));
+  }
+
+  // Restore toggle states
+  if (typeof fromHash.fz === 'boolean') {
+    fuzzyEnabled = fromHash.fz;
+    document.getElementById('fuzzy-btn').classList.toggle('active', fuzzyEnabled);
+  }
+  if (typeof fromHash.ch === 'boolean') {
+    charEnabled = fromHash.ch;
+    document.getElementById('char-btn').classList.toggle('active', charEnabled);
+  }
+  if (typeof fromHash.ic === 'boolean') {
+    ignoreCase = fromHash.ic;
+    document.getElementById('ignore-case-btn').classList.toggle('active', ignoreCase);
+  }
+  if (typeof fromHash.iw === 'boolean') {
+    ignoreWS = fromHash.iw;
+    document.getElementById('ignore-ws-btn').classList.toggle('active', ignoreWS);
+  }
+}
+
+updateInputStats('stats-old', textOld.value);
+updateInputStats('stats-new', textNew.value);
+compare(); // generates rows with correct segIdx mapping
+
+// Restore merge decisions AFTER compare() so segIdx is valid
+if (fromHash?.ms && Object.keys(fromHash.ms).length > 0) {
+  mergeState = {};
+  for (const [seg, chunks] of Object.entries(fromHash.ms)) {
+    mergeState[+seg] = {};
+    for (const [chunk, decision] of Object.entries(chunks)) {
+      mergeState[+seg][+chunk] = decision;
+    }
+  }
+  mergeActive = true;
+  hideMergeHint();
+  document.getElementById('merge-panel').style.display = 'flex';
+  reapplyMergeVisuals();
+  updateMergePanel();
+}
+</script>
+</body>
+</html>
