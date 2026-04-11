@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>differ</title>
-  <script src="https://unpkg.com/compromise/builds/compromise.min.js"></script>
-  <script src="https://unpkg.com/diff/dist/diff.min.js"></script>
+  <script src="https://unpkg.com/compromise@14.15.0/builds/compromise.min.js"></script>
+  <script src="https://unpkg.com/diff@8.0.4/dist/diff.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -465,10 +465,21 @@
 
     .merge-conflict-inline {
       background: var(--amber-bg);
-      color: var(--amber);
       border-radius: 3px;
       padding: 0 2px;
+      font-size: 0.95em;
     }
+
+    .mci-left, .mci-right {
+      cursor: pointer;
+      border-radius: 2px;
+      padding: 0 1px;
+      transition: opacity 0.1s;
+    }
+
+    .mci-left  { color: var(--color-old); }
+    .mci-right { color: var(--color-new); }
+    .mci-left:hover, .mci-right:hover { opacity: 0.75; }
 
     .merge-conflict-block {
       border: 1px solid var(--amber-border);
@@ -652,11 +663,21 @@ function updateInputStats(id, text) {
 // ---------------------------------------------------------------------------
 // Mode + fuzzy selection
 // ---------------------------------------------------------------------------
-let currentMode  = 'sentence';
-let fuzzyEnabled = false;
-let charEnabled  = false;
-let ignoreCase   = true;   // on by default
-let ignoreWS     = false;
+// Preference persistence (localStorage). URL hash takes precedence when present.
+function loadPref(key, fallback) {
+  const v = localStorage.getItem('differ-' + key);
+  if (v === null) return fallback;
+  if (v === 'true') return true;
+  if (v === 'false') return false;
+  return v; // strings like mode name
+}
+function savePref(key, value) { localStorage.setItem('differ-' + key, value); }
+
+let currentMode  = loadPref('mode', 'sentence');
+let fuzzyEnabled = loadPref('fuzzy', false);
+let charEnabled  = loadPref('char', false);
+let ignoreCase   = loadPref('ignoreCase', true);
+let ignoreWS     = loadPref('ignoreWS', false);
 
 // Merge state
 let currentRows      = [];
@@ -682,6 +703,7 @@ document.getElementById('mode-group').addEventListener('click', e => {
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   currentMode = newMode;
+  savePref('mode', currentMode);
   compare(); // calls resetMergeState() internally
 
   // Restore saved state for this mode if it exists
@@ -702,6 +724,7 @@ const charBtn = document.getElementById('char-btn');
 charBtn.addEventListener('click', () => {
   charEnabled = !charEnabled;
   charBtn.classList.toggle('active', charEnabled);
+  savePref('char', charEnabled);
   savedMergeStates = {};
   compare();
   updateHash();
@@ -711,6 +734,7 @@ const fuzzyBtn = document.getElementById('fuzzy-btn');
 fuzzyBtn.addEventListener('click', () => {
   fuzzyEnabled = !fuzzyEnabled;
   fuzzyBtn.classList.toggle('active', fuzzyEnabled);
+  savePref('fuzzy', fuzzyEnabled);
   savedMergeStates = {};
   compare();
   updateHash();
@@ -719,6 +743,7 @@ fuzzyBtn.addEventListener('click', () => {
 document.getElementById('ignore-case-btn').addEventListener('click', function() {
   ignoreCase = !ignoreCase;
   this.classList.toggle('active', ignoreCase);
+  savePref('ignoreCase', ignoreCase);
   savedMergeStates = {};
   compare();
   updateHash();
@@ -727,6 +752,7 @@ document.getElementById('ignore-case-btn').addEventListener('click', function() 
 document.getElementById('ignore-ws-btn').addEventListener('click', function() {
   ignoreWS = !ignoreWS;
   this.classList.toggle('active', ignoreWS);
+  savePref('ignoreWS', ignoreWS);
   savedMergeStates = {};
   compare();
   updateHash();
@@ -792,8 +818,9 @@ function splitText(text, mode) {
 const FUZZY_THRESHOLD = 0.25;
 
 function jaccardSimilarity(a, b) {
-  const wa = new Set((a.toLowerCase().match(/\w+/g) || []));
-  const wb = new Set((b.toLowerCase().match(/\w+/g) || []));
+  const prep = s => ignoreCase ? s.toLowerCase() : s;
+  const wa = new Set((prep(a).match(/\w+/g) || []));
+  const wb = new Set((prep(b).match(/\w+/g) || []));
   if (wa.size === 0 && wb.size === 0) return 1;
   if (wa.size === 0 || wb.size === 0) return 0;
   let intersection = 0;
@@ -803,7 +830,8 @@ function jaccardSimilarity(a, b) {
 
 function segmentSimilarity(a, b) {
   const jaccard = jaccardSimilarity(a, b);
-  const firstWord = s => (s.toLowerCase().match(/\b\w+/) || [''])[0];
+  const prep = s => ignoreCase ? s.toLowerCase() : s;
+  const firstWord = s => (prep(s).match(/\b\w+/) || [''])[0];
   const firstWordBonus = firstWord(a) === firstWord(b) && firstWord(a) !== '' ? 1 : 0;
   const wA = (a.match(/\w+/g) || []).length;
   const wB = (b.match(/\w+/g) || []).length;
@@ -918,34 +946,6 @@ function computeDiff(segs1, segs2, fuzzy = false) {
 // ---------------------------------------------------------------------------
 // Rendering
 // ---------------------------------------------------------------------------
-function renderWordDiff(parts, side) {
-  const frag = document.createDocumentFragment();
-  for (const part of parts) {
-    if (part.removed && side === 'right') continue;
-    if (part.added  && side === 'left')  continue;
-    const span = document.createElement('span');
-    span.textContent = part.value;
-    if (part.removed) span.className = 'word-old';
-    else if (part.added) span.className = 'word-new';
-    frag.appendChild(span);
-  }
-  return frag;
-}
-
-function renderCharDiff(parts, side) {
-  const frag = document.createDocumentFragment();
-  for (const part of parts) {
-    if (part.removed && side === 'right') continue;
-    if (part.added  && side === 'left')  continue;
-    const span = document.createElement('span');
-    span.textContent = part.value;
-    if (part.removed) span.className = 'char-old';
-    else if (part.added) span.className = 'char-new';
-    frag.appendChild(span);
-  }
-  return frag;
-}
-
 
 // ---------------------------------------------------------------------------
 // Merge rendering helpers
@@ -1253,12 +1253,30 @@ function updateMergePanel() {
         }
         mergeText.appendChild(block);
       } else {
-        const display = oldText && newText ? `{${oldText}|${newText}}`
-          : oldText ? `{${oldText}|}` : `{|${newText}}`;
-        const span = document.createElement('span');
-        span.className = 'merge-conflict-inline';
-        span.textContent = display;
-        mergeText.appendChild(span);
+        const wrap = document.createElement('span');
+        wrap.className = 'merge-conflict-inline';
+        if (oldText) {
+          const s = document.createElement('span');
+          s.className = 'mci-left';
+          s.textContent = oldText;
+          s.dataset.resolveSeg   = token.segIdx;
+          s.dataset.resolveChunk = token.chunkIdx;
+          s.dataset.resolveSide  = 'left';
+          wrap.appendChild(s);
+        }
+        if (oldText && newText) {
+          wrap.appendChild(document.createTextNode(' | '));
+        }
+        if (newText) {
+          const s = document.createElement('span');
+          s.className = 'mci-right';
+          s.textContent = newText;
+          s.dataset.resolveSeg   = token.segIdx;
+          s.dataset.resolveChunk = token.chunkIdx;
+          s.dataset.resolveSide  = 'right';
+          wrap.appendChild(s);
+        }
+        mergeText.appendChild(wrap);
       }
     }
   }
@@ -1420,8 +1438,12 @@ function encodeForHash() {
       ic: ignoreCase,
       iw: ignoreWS,
     };
-    const ms = mergeState;
-    if (Object.keys(ms).length > 0) state.ms = ms;
+    const pruned = {};
+    for (const [seg, chunks] of Object.entries(mergeState)) {
+      const nonNull = Object.fromEntries(Object.entries(chunks).filter(([, v]) => v !== null));
+      if (Object.keys(nonNull).length > 0) pruned[seg] = nonNull;
+    }
+    if (Object.keys(pruned).length > 0) state.ms = pruned;
     return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
   } catch { return ''; }
 }
@@ -1583,6 +1605,14 @@ themeDropdown.addEventListener('click', e => {
 document.addEventListener('click', e => {
   if (!e.target.closest('#theme-picker')) themeDropdown.hidden = true;
 });
+
+// Apply saved preferences to button states on load
+document.querySelectorAll('.mode-btn').forEach(b =>
+  b.classList.toggle('active', b.dataset.mode === currentMode));
+document.getElementById('fuzzy-btn').classList.toggle('active', fuzzyEnabled);
+document.getElementById('char-btn').classList.toggle('active', charEnabled);
+document.getElementById('ignore-case-btn').classList.toggle('active', ignoreCase);
+document.getElementById('ignore-ws-btn').classList.toggle('active', ignoreWS);
 
 // Apply saved theme on load
 applyTheme(currentTheme);

@@ -42,7 +42,7 @@ Controls how text is divided into units before diffing. Toggle with the mode but
 | **paragraph** | Splits on blank lines (`\n\n`) |
 | **sentence** | NLP-aware tokenization via compromise.js — handles abbreviations like Mr., Dr., U.S.A. correctly. Default. |
 | **clause** | Splits within sentences at clause boundaries. Short clauses (<4 words) are merged into their predecessor. |
-| **line** | Splits on single newlines. |
+| **line** | Splits on single newlines. Blank and whitespace-only lines are dropped. |
 
 ### Diff options
 
@@ -111,7 +111,7 @@ Click **link** in the toolbar to copy the current URL. Anyone opening it sees th
 
 ## Architecture
 
-A single HTML file (~1100 lines) with two CDN dependencies:
+A single HTML file with two CDN dependencies:
 
 | Dependency | Purpose | Gzip size |
 |---|---|---|
@@ -210,7 +210,7 @@ A shared link is a complete snapshot — the recipient sees the same diff and al
 
 ```
 differ/
-├── index.html   # entire application (~1100 lines, self-contained)
+├── index.html   # entire application (self-contained, no build step)
 ├── todo.md      # feature roadmap
 └── README.md    # this file
 ```
