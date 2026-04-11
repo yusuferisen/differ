@@ -493,6 +493,40 @@
     .mcb-right { background: var(--bg-new); color: var(--color-new); }
     .mcb-left:hover, .mcb-right:hover { opacity: 0.8; }
 
+    /* ── Dismiss button for one-sided conflicts ── */
+    .merge-dismiss {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--text);
+      font-size: 10px;
+      line-height: 1;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.12s, background 0.12s;
+      vertical-align: middle;
+      flex-shrink: 0;
+      margin-left: 2px;
+    }
+    .merge-dismiss:hover {
+      background: var(--color-old);
+      color: #fff;
+      opacity: 1 !important;
+    }
+    .merge-conflict-inline:hover .merge-dismiss { opacity: 0.7; }
+    .merge-conflict-block { position: relative; }
+    .merge-conflict-block > .merge-dismiss {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      z-index: 1;
+    }
+    .merge-conflict-block:hover > .merge-dismiss { opacity: 0.7; }
+
     /* ── Samples picker (shown with ?samples param) ── */
     .samples-picker { position: relative; }
     .samples-dropdown {
@@ -596,6 +630,7 @@
       .diff-row.removed .row-accept-right,
       .diff-row.added .row-accept-left,
       .diff-row.added .row-accept-right { opacity: 0.5; }
+      .merge-dismiss { opacity: 0.5; }
     }
 
     /* ── Responsive: tablet (≤768px) ── */
@@ -699,6 +734,7 @@
       .merge-undo-btn, .merge-copy-btn { min-height: 44px; padding: 6px 12px; font-size: 13px; }
       #merge-text { font-size: 14px; padding: 10px; }
       .mcb-left, .mcb-right { padding: 8px 12px; font-size: 13px; min-height: 44px; }
+      .merge-dismiss { width: 22px; height: 22px; font-size: 12px; }
 
       /* Dropdowns — larger touch targets */
       .samples-dropdown, .options-dropdown, .theme-dropdown { min-width: 200px; }
@@ -1368,14 +1404,20 @@ function computeMergedParts() {
       tokens.push({ type: 'text', text: row.left });
     } else if (row.type === 'removed') {
       const dec = mergeState[row.segIdx]?.[0] ?? null;
-      if (dec === null || dec === 'left') {
+      if (dec === 'left') {
         tokens.push({ type: 'text', text: row.left });
+      } else if (dec === null) {
+        tokens.push({ type: 'unresolved', old: row.left, new: null,
+          long: row.left.length > 80, segIdx: row.segIdx, chunkIdx: 0 });
       }
       // dec === 'right': exclude (accept deletion)
     } else if (row.type === 'added') {
       const dec = mergeState[row.segIdx]?.[0] ?? null;
-      if (dec === null || dec === 'right') {
+      if (dec === 'right') {
         tokens.push({ type: 'text', text: row.right });
+      } else if (dec === null) {
+        tokens.push({ type: 'unresolved', old: null, new: row.right,
+          long: row.right.length > 80, segIdx: row.segIdx, chunkIdx: 0 });
       }
       // dec === 'left': exclude (reject addition)
     } else if (row.type === 'changed' && row.left && row.right) {
@@ -1435,13 +1477,19 @@ function computeMergedParts() {
       // changed row with only one side (non-fuzzy uneven pairing)
       if (row.left && !row.right) {
         const dec = mergeState[row.segIdx]?.[0] ?? null;
-        if (dec === null || dec === 'left') {
+        if (dec === 'left') {
           tokens.push({ type: 'text', text: row.left });
+        } else if (dec === null) {
+          tokens.push({ type: 'unresolved', old: row.left, new: null,
+            long: row.left.length > 80, segIdx: row.segIdx, chunkIdx: 0 });
         }
       } else if (row.right && !row.left) {
         const dec = mergeState[row.segIdx]?.[0] ?? null;
-        if (dec === null || dec === 'right') {
+        if (dec === 'right') {
           tokens.push({ type: 'text', text: row.right });
+        } else if (dec === null) {
+          tokens.push({ type: 'unresolved', old: null, new: row.right,
+            long: row.right.length > 80, segIdx: row.segIdx, chunkIdx: 0 });
         }
       }
     }
@@ -1458,6 +1506,17 @@ function computeMergedParts() {
   }
 
   return tokens;
+}
+
+function makeDismissBtn(segIdx, chunkIdx, side) {
+  const btn = document.createElement('span');
+  btn.className = 'merge-dismiss';
+  btn.textContent = '\u00d7';
+  btn.dataset.resolveSeg   = segIdx;
+  btn.dataset.resolveChunk = chunkIdx;
+  btn.dataset.resolveSide  = side;
+  btn.title = 'Dismiss';
+  return btn;
 }
 
 function updateMergePanel() {
@@ -1498,6 +1557,9 @@ function updateMergePanel() {
           d.dataset.resolveSide  = 'right';
           block.appendChild(d);
         }
+        if (!oldText || !newText) {
+          block.appendChild(makeDismissBtn(token.segIdx, token.chunkIdx, oldText ? 'right' : 'left'));
+        }
         mergeText.appendChild(block);
       } else {
         const wrap = document.createElement('span');
@@ -1522,6 +1584,9 @@ function updateMergePanel() {
           s.dataset.resolveChunk = token.chunkIdx;
           s.dataset.resolveSide  = 'right';
           wrap.appendChild(s);
+        }
+        if (!oldText || !newText) {
+          wrap.appendChild(makeDismissBtn(token.segIdx, token.chunkIdx, oldText ? 'right' : 'left'));
         }
         mergeText.appendChild(wrap);
       }
