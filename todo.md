@@ -34,6 +34,7 @@
 - [x] "Options" dropdown — hide smart matching, character-level, ignore case, ignore spacing behind a dropdown menu to reduce visual noise; reuses theme picker dropdown pattern; options button shows active indicator when non-default settings are on
 - [x] Show changed rows only / show all toggle in toolbar (default: changed only); important for long documents like CVs where equal rows dominate
 - [x] Plain-language UI copy: "5 to decide" not "5 unresolved", "final version" not "merge result", "smart matching" not "fuzzy matching", "sections" not "segments", review all technical labels for general-audience friendliness
+- [ ] Editable merge: currently users can only pick version A or B for each diff chunk. Add the ability to type custom replacement text — a free-text edit option alongside the two existing choices — so the tool works as a full editing aid, not just a picker. UX approach TBD.
 
 ## Themes
 - [x] Theme picker: auto/light/dark + named themes (nord, solarized dark, dracula, github) via dropdown button
@@ -56,6 +57,18 @@
   - [ ] Enforce HTTPS enabled in GitHub Pages settings
   - [ ] Verify custom domain ownership (TXT record in Namecheap)
 - [x] Shareable URL (base64-encoded hash, "link" button copies URL, ~8KB limit)
+
+## Onboarding & discoverability
+- [ ] The app's purpose is unclear to newcomers who aren't already routinely comparing/editing text. The current landing state (empty textareas + placeholder) doesn't communicate what the tool does or why someone would use it. Need to add introductory language, usage tips, or a guided first-use experience so that first-time visitors understand the value without a walkthrough. UX approach TBD.
+
+## Splitting modes review
+- [ ] Clause mode is not obviously different from sentence mode to non-technical users; line mode often produces identical results to paragraph mode. Evaluate whether to: (a) create better sample texts that clearly showcase when each mode shines, (b) move clause and/or line modes behind an "advanced" settings area, or (c) remove them. Goal is to avoid confusing newcomers with modes that feel redundant.
+
+## Naming
+- [ ] "differ" didn't resonate with a non-technical tester — the name felt meaningless without context. Evaluate whether the app needs a different name. This likely needs input from multiple people; add to discussion list.
+
+## Mobile app
+- [ ] Despite the PWA and mobile-responsive layout, the experience still isn't great on phones. Explore building a lightweight native or hybrid mobile app for users who need to compare text on the go.
 
 ## Chrome extension
 - [x] Context-menu extension (lives in `extension/` subdirectory): select text on any web page → right-click → "Set as Original" or "Set as Modified" → opens differ with both texts pre-loaded
