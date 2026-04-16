@@ -3,6 +3,7 @@
   "name": "Differ",
   "version": "1.0",
   "description": "Select text on any page and compare it in Differ",
+  "homepage_url": "https://differapp.com",
   "permissions": ["contextMenus", "storage", "activeTab", "scripting"],
   "host_permissions": ["https://differapp.com/*"],
   "background": {

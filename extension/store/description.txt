@@ -1,0 +1,37 @@
+SHORT DESCRIPTION (132 characters max — update manifest.json "description" field to match before publishing):
+
+Select text on any page and compare it in Differ — a linguistic text diff and merge tool.
+
+
+FULL DESCRIPTION (Chrome Web Store listing):
+
+Compare text from any web page without copy-pasting. Select text, right-click, and Differ handles the rest — opening a full-featured diff and merge tool with your texts pre-loaded.
+
+HOW TO USE
+
+1. Select text on any web page and right-click. Choose "Differ > Set as Original".
+2. Navigate to any page (same tab or a different one). Select text and right-click. Choose "Differ > Set as Modified".
+3. Differ opens automatically in a new tab with both texts loaded and the diff already computed.
+
+You can also click the extension icon to open a popup where you can view, edit, or paste texts directly, then click "Open in Differ".
+
+FEATURES
+
+- Works across tabs: capture text from one page, then another, and compare them instantly
+- Context menu integration: right-click any selected text to set it as Original or Modified
+- Popup with editable text fields: paste or edit texts directly without visiting a web page first
+- Per-field clear buttons for quick resets
+- Auto-opens Differ when both texts are captured — no extra clicks needed
+- Full selection text capture: handles long selections without truncation
+
+ABOUT DIFFER
+
+Differ is a browser-based text diff and merge tool that compares texts at meaningful linguistic levels — sentences, paragraphs, clauses, or lines — with word-level or character-level inline highlighting. You can interactively merge changes by clicking highlighted words to pick a side, then copy or share the final version.
+
+Especially useful for comparing edited prose, LLM rewrites, document versions, translations, and paraphrased text.
+
+PRIVACY
+
+All processing happens locally in your browser. Your text never leaves your device — there are no servers, no analytics, no tracking, and no accounts. Captured texts are stored temporarily in your browser's local storage and cleared after each comparison.
+
+Learn more at https://differapp.com

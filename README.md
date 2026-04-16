@@ -128,7 +128,7 @@ A Manifest V3 Chrome extension that lets you compare text from any web page with
 - Content script injection fills the web app's textareas without modifying `index.html`
 - Popup delegates tab creation to the background service worker to survive popup close
 
-To install locally: load `extension/` as an unpacked extension at `chrome://extensions` (enable Developer mode).
+To install locally: load `extension/` as an unpacked extension at `chrome://extensions` (enable Developer mode). For publishing to the Chrome Web Store, see [extension/PUBLISHING.md](extension/PUBLISHING.md).
 
 ---
 
@@ -254,7 +254,11 @@ differ/
 │   ├── background.js       # service worker (context menus, tab orchestration)
 │   ├── content.js          # injected into differ to fill textareas
 │   ├── popup.html/css/js   # extension popup UI
-│   └── icons/              # extension icons (16, 48, 128px)
+│   ├── icons/              # extension icons (16, 48, 128px)
+│   ├── store/              # Chrome Web Store listing assets
+│   │   ├── description.txt # store listing copy (short + full)
+│   │   └── privacy-policy.md # privacy policy
+│   └── PUBLISHING.md       # step-by-step publishing guide
 ├── todo.md                 # feature roadmap
 └── README.md               # this file
 ```
