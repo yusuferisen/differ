@@ -53,9 +53,9 @@
   - [x] DNS A records pointing to GitHub Pages IPs (Namecheap)
   - [x] CNAME record for www → yusuferisen.github.io (Namecheap)
   - [x] GitHub Pages enabled (deploy from branch, main, root)
-  - [ ] DNS propagation + GitHub Pages DNS check passes
-  - [ ] Enforce HTTPS enabled in GitHub Pages settings
-  - [ ] Verify custom domain ownership (TXT record in Namecheap)
+  - [x] DNS propagation + GitHub Pages DNS check passes
+  - [x] Enforce HTTPS enabled in GitHub Pages settings
+  - [x] Verify custom domain ownership (TXT record in Namecheap)
 - [x] Shareable URL (base64-encoded hash, "link" button copies URL, ~8KB limit)
 
 ## Onboarding & discoverability
