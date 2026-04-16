@@ -67,8 +67,19 @@
 ## Naming
 - [ ] "differ" didn't resonate with a non-technical tester — the name felt meaningless without context. Evaluate whether the app needs a different name. This likely needs input from multiple people; add to discussion list.
 
+## Analytics & event tracking
+- [x] Cloudflare Web Analytics — privacy-friendly visitor tracking (page views, unique visitors, countries, referrers, browser/OS, Core Web Vitals). Zero cookies, no consent banner. Beacon token added to `index.html`.
+- [ ] Event tracking for user interactions — Cloudflare Web Analytics does not support custom events. Integrate a lightweight event tracker (recommended: Umami, self-hosted on Vercel + free DB tier) to capture:
+  - **High value**: mode switches (paragraph/sentence/clause/line), share link clicks, copy merged result
+  - **Medium value**: option toggles (character-level, smart matching, ignore case, ignore spacing), theme selection, accept-all (« / ») clicks
+  - Skip: textarea input, resize handle, undo, dropdown open/close (too noisy, not actionable)
+
 ## Mobile app
-- [ ] Despite the PWA and mobile-responsive layout, the experience still isn't great on phones. Explore building a lightweight native or hybrid mobile app for users who need to compare text on the go.
+- [ ] Despite the PWA and mobile-responsive layout, the experience still isn't great on phones. Explore building a native iOS app. Key considerations from initial assessment:
+  - **Strongest case for native**: Share Sheet integration (select text in any app → share to Differ) is the killer feature a web app can't replicate. Also: Spotlight search, haptic feedback on merge decisions, App Store discoverability.
+  - **Architecture challenge**: compromise.js (NLP sentence/clause splitting) has no Swift equivalent. Options: (a) port the tokenizer, (b) use a WKWebView bridge for the NLP layer, or (c) ship a simpler MVP with line-mode only (no NLP dependency) and layer in sentence/clause later.
+  - **Suggested MVP scope**: two text fields → line-mode diff only → view-only (no merge) → Share Sheet extension for text capture. Add sentence/clause modes and merge UX as follow-ups.
+  - **Effort**: not a single-session task. The diff viewer, merge interaction model (chunk selection + undo stack), and Share Extension (separate target, app groups) each need iterative work.
 
 ## Chrome extension
 - [x] Context-menu extension (lives in `extension/` subdirectory): select text on any web page → right-click → "Set as Original" or "Set as Modified" → opens differ with both texts pre-loaded
