@@ -1,6 +1,6 @@
 # differ
 
-A browser-based text diff and merge tool. Compares two texts at the sentence, paragraph, clause, or line level — with word- or character-level inline highlighting within each changed pair — and lets you interactively build a merged result.
+A browser-based text review and merge tool. Paste two versions of any text to see exactly what changed — at the sentence, paragraph, clause, or line level — with word- or character-level inline highlighting. Then interactively build a merged result.
 
 **[differapp.com](https://differapp.com)** — no server, no installation. Installable as a web app from Chrome, Edge, or Safari. Also available as a [Chrome extension](#chrome-extension) for comparing text across any web page.
 
@@ -8,7 +8,7 @@ A browser-based text diff and merge tool. Compares two texts at the sentence, pa
 
 ## What makes it different
 
-Most diff tools operate on lines. differ splits text into **meaningful linguistic units** and aligns them intelligently. Within each changed pair it highlights the exact words (or characters) that differ. You can then tap any highlighted word to pick a side, build a merged result, and copy or share it.
+Most diff tools operate on lines. differ splits text into **meaningful linguistic units** and aligns them intelligently. Within each changed pair it highlights the exact words (or characters) that changed. You can then tap any highlighted word to pick a side, build a merged result, and copy or share it.
 
 Especially useful for:
 
@@ -44,11 +44,11 @@ Controls how text is divided into units before diffing. Toggle with the mode but
 
 ### Diff options
 
-The **options** dropdown in the header contains comparison and normalization settings. The button highlights when any non-default setting is active.
+The **options** dropdown in the header contains compare and matching settings. The button highlights when any non-default setting is active.
 
 | Toggle | What it does | Default |
 |---|---|---|
-| **character-level** | Character-level highlighting instead of word-level within each changed pair | Off |
+| **show character changes** | Character-level highlighting instead of word-level within each changed pair | Off |
 | **smart matching** | Pairs sections by similarity instead of position — handles insertions in the middle correctly | Off |
 | **ignore case** | Treats upper/lowercase as equal for matching and highlighting | **On** |
 | **ignore spacing** | Normalizes whitespace before comparison | Off |
@@ -247,7 +247,7 @@ differ/
 ├── icon-512.png            # app icon 512×512
 ├── icon-maskable-512.png   # app icon (maskable, Android adaptive)
 ├── icon-maskable.svg       # maskable icon (vector)
-├── samples.js              # sample text pairs (loaded with ?samples param)
+├── samples.js              # sample text pairs (always loaded; dropdown with ?samples)
 ├── CNAME                   # custom domain for GitHub Pages (differapp.com)
 ├── extension/              # Chrome extension (Manifest V3)
 │   ├── manifest.json       # extension manifest
@@ -263,17 +263,15 @@ differ/
 └── README.md               # this file
 ```
 
-Open `index.html` directly in a browser. No build step, no server needed. Add `?samples` to the URL to load a dropdown with sample text pairs for testing. For PWA install (Add to Home Screen), serve via `localhost` or HTTPS.
+Open `index.html` directly in a browser. No build step, no server needed. A "try a sample" button on the empty state loads a generic demo. Add `?samples` to the URL to show a dropdown with additional sample text pairs for testing. For PWA install (Add to Home Screen), serve via `localhost` or HTTPS.
 
 ---
 
 ## Roadmap
 
-See [todo.md](todo.md). Remaining items:
+See [todo.md](todo.md). Key remaining items:
 
-**Research**
-- Investigate semantic change classification using compromise.js (already loaded): label diff chunks by what kind of thing changed — number, date, name, sentiment, etc.
-
-**Publishing**
-- DNS propagation + GitHub Pages DNS verification
-- HTTPS enforcement and custom domain ownership verification (TXT record)
+- Semantic change classification via compromise.js (label what *kind* of thing changed)
+- Editable merge (type custom text, not just pick A or B)
+- Event tracking for user interactions (Umami or similar)
+- Native iOS app with Share Sheet integration

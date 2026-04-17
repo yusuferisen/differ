@@ -1,9 +1,10 @@
-const CACHE = 'differ-v3';
+const CACHE = 'differ-v4';
 const ASSETS = [
   './',
   './index.html',
   './compromise.min.js',
   './diff.min.js',
+  './samples.js',
   './icon.svg',
   './icon-192.png',
   './icon-512.png',

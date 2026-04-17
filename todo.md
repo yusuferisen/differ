@@ -40,7 +40,7 @@
 - [x] Theme picker: auto/light/dark + named themes (nord, solarized dark, dracula, github) via dropdown button
 
 ## Pre-launch
-- [x] Sample/placeholder text: gated behind ?samples query param; dropdown with multiple sample scenarios; empty textareas by default
+- [x] Sample/placeholder text: dropdown with multiple sample scenarios gated behind ?samples query param; generic sample always available via "try a sample" button
 
 ## Publishing / distribution
 - [x] Mobile-friendly layout + unified view (stacked panels, single-column diff, touch-friendly controls)
@@ -49,7 +49,7 @@
 - [x] Fully offline mode (bundle compromise.js + jsdiff inline, no CDN dependency)
 - [x] Deploy as static site (GitHub Pages + custom domain differapp.com)
   - [x] CNAME file for custom domain
-  - [x] Service worker cache updated (v3, added maskable icon)
+  - [x] Service worker cache updated (v4, added maskable icon + samples.js)
   - [x] DNS A records pointing to GitHub Pages IPs (Namecheap)
   - [x] CNAME record for www → yusuferisen.github.io (Namecheap)
   - [x] GitHub Pages enabled (deploy from branch, main, root)
@@ -59,7 +59,15 @@
 - [x] Shareable URL (base64-encoded hash, "link" button copies URL, ~8KB limit)
 
 ## Onboarding & discoverability
-- [ ] The app's purpose is unclear to newcomers who aren't already routinely comparing/editing text. The current landing state (empty textareas + placeholder) doesn't communicate what the tool does or why someone would use it. Need to add introductory language, usage tips, or a guided first-use experience so that first-time visitors understand the value without a walkthrough. UX approach TBD.
+- [x] Tagline ("review changes in any text") below the app name in the header
+- [x] Textarea placeholders guiding users to paste original / modified text
+- [x] Enriched empty state with use cases and "try a sample" button (loads a generic sample)
+- [x] Generic sample text (reading room scene) for public-facing demo; other samples remain behind `?samples`
+- [x] Mode button tooltips describing each split mode on hover
+- [x] Options dropdown language cleanup: "normalization" → "when matching", "character-level" → "show character changes"
+- [x] Meta description rewritten for plain-language review framing
+- [x] Clear button in toolbar with 8-second undo window (switches to "undo" after clearing, auto-expires)
+- [ ] Editable merge: currently users can only pick version A or B for each diff chunk. Add the ability to type custom replacement text — a free-text edit option alongside the two existing choices — so the tool works as a full editing aid, not just a picker. UX approach TBD.
 
 ## Splitting modes review
 - [ ] Clause mode is not obviously different from sentence mode to non-technical users; line mode often produces identical results to paragraph mode. Evaluate whether to: (a) create better sample texts that clearly showcase when each mode shines, (b) move clause and/or line modes behind an "advanced" settings area, or (c) remove them. Goal is to avoid confusing newcomers with modes that feel redundant.

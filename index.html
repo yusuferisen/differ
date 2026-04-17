@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#21252b">
-  <meta name="description" content="Compare texts at meaningful linguistic levels with word-level highlighting and interactive merging">
+  <meta name="description" content="Review changes in any text — see exactly what was added, removed, or rewritten">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -73,6 +73,12 @@
       font-size: 11px;
       color: var(--text-dim);
       margin-left: 2px;
+    }
+
+    .tagline {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-weight: 400;
     }
 
     .mode-group {
@@ -208,8 +214,13 @@
       color: var(--text-dim);
     }
 
-    .share-btn {
+    .toolbar-actions {
       margin-left: auto;
+      display: flex;
+      gap: 10px;
+    }
+
+    .share-btn {
       background: none;
       border: 1px solid var(--border);
       color: var(--text-dim);
@@ -303,11 +314,35 @@
     /* Placeholder / empty state */
     .placeholder {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       flex: 1;
       color: var(--text-mute);
       font-size: 12px;
+      gap: 6px;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .placeholder-usecases {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .placeholder-sample {
+      font-size: 11px;
+      color: var(--accent);
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: inherit;
+      padding: 4px 0;
+      margin-top: 2px;
+    }
+
+    .placeholder-sample:hover {
+      text-decoration: underline;
     }
 
     /* Char-level highlights (used when char toggle is on) */
@@ -637,6 +672,7 @@
     @media (max-width: 768px) {
       header { flex-wrap: wrap; gap: 10px; padding: 8px 12px; }
       .hint { display: none; }
+      .tagline { display: none; }
       .mode-btn { padding: 5px 10px; min-height: 36px; display: inline-flex; align-items: center; }
       .fuzzy-btn { padding: 5px 10px; min-height: 36px; display: inline-flex; align-items: center; }
       .inputs { height: 180px; }
@@ -755,22 +791,23 @@
 
 <header>
   <h1>differ</h1>
+  <span class="tagline">review changes in any text</span>
   <span class="hint" id="hint">alt+M: switch mode</span>
   <div class="mode-group" id="mode-group">
-    <button class="mode-btn" data-mode="paragraph">paragraph</button>
-    <button class="mode-btn active" data-mode="sentence">sentence</button>
-    <button class="mode-btn" data-mode="clause">clause</button>
-    <button class="mode-btn" data-mode="line">line</button>
+    <button class="mode-btn" data-mode="paragraph" title="Review paragraph by paragraph">paragraph</button>
+    <button class="mode-btn active" data-mode="sentence" title="Review sentence by sentence — best for prose">sentence</button>
+    <button class="mode-btn" data-mode="clause" title="Review at phrase level — most detailed">clause</button>
+    <button class="mode-btn" data-mode="line" title="Review line by line — best for code">line</button>
   </div>
   <div class="header-sep"></div>
   <div class="options-picker" id="options-picker">
     <button class="fuzzy-btn" id="options-btn">options ▾</button>
     <div class="options-dropdown" id="options-dropdown" hidden>
-      <div class="theme-section-label">comparison</div>
-      <button class="theme-option" id="char-btn">character-level</button>
+      <div class="theme-section-label">compare</div>
+      <button class="theme-option" id="char-btn">show character changes</button>
       <button class="theme-option" id="fuzzy-btn">smart matching</button>
       <div class="theme-divider"></div>
-      <div class="theme-section-label">normalization</div>
+      <div class="theme-section-label">when matching</div>
       <button class="theme-option" id="ignore-case-btn">ignore case</button>
       <button class="theme-option" id="ignore-ws-btn">ignore spacing</button>
     </div>
@@ -795,22 +832,29 @@
 <div class="inputs">
   <div class="input-panel">
     <div class="input-label old">Original<span class="input-stats" id="stats-old"></span></div>
-    <textarea id="text-old" spellcheck="false"></textarea>
+    <textarea id="text-old" spellcheck="false" placeholder="Paste the original text here..."></textarea>
   </div>
   <div class="input-panel">
     <div class="input-label new">Modified<span class="input-stats" id="stats-new"></span></div>
-    <textarea id="text-new" spellcheck="false"></textarea>
+    <textarea id="text-new" spellcheck="false" placeholder="Paste the modified version here..."></textarea>
   </div>
 </div>
 
 <div class="toolbar">
   <span class="stats" id="stats"></span>
   <button class="fuzzy-btn" id="toggle-equal-btn" style="display:none">show all</button>
-  <button class="share-btn" id="share-btn" style="display:none">share link</button>
+  <div class="toolbar-actions">
+    <button class="share-btn" id="share-btn" style="display:none">share link</button>
+    <button class="share-btn" id="clear-btn" style="display:none">clear</button>
+  </div>
 </div>
 
 <div id="diff-output">
-  <div class="placeholder">Insert text in the boxes above to start comparing</div>
+  <div class="placeholder">
+    <span>Paste two versions of any text to review the changes</span>
+    <span class="placeholder-usecases">Edited documents · LLM rewrites · code changes</span>
+    <button class="placeholder-sample" id="try-sample-btn">try a sample</button>
+  </div>
 </div>
 
 <div id="merge-panel">
@@ -1761,8 +1805,18 @@ function compare() {
   const output  = document.getElementById('diff-output');
   const stats   = document.getElementById('stats');
 
+  const clearBtn = document.getElementById('clear-btn');
+  const hasText = oldText.trim() || newText.trim();
+  clearBtn.style.display = hasText ? '' : 'none';
+  if (!hasText) clearBtn.textContent = 'clear';
+
   if (!oldText.trim() || !newText.trim()) {
-    output.innerHTML = '<div class="placeholder">Insert text in the boxes above to start comparing</div>';
+    output.innerHTML = '<div class="placeholder">' +
+      '<span>Paste two versions of any text to review the changes</span>' +
+      '<span class="placeholder-usecases">Edited documents · LLM rewrites · code changes</span>' +
+      '<button class="placeholder-sample" id="try-sample-btn">try a sample</button>' +
+      '</div>';
+    bindTrySampleBtn();
     stats.textContent = '';
     applyHideEqual(0);
     resetMergeState();
@@ -1887,6 +1941,68 @@ document.getElementById('share-btn').addEventListener('click', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Clear / undo button
+// ---------------------------------------------------------------------------
+let clearBackup = null;
+let clearTimer = null;
+
+function cancelClearUndo() {
+  const clearBtn = document.getElementById('clear-btn');
+  if (clearBtn.textContent === 'undo') {
+    clearBackup = null;
+    clearTimeout(clearTimer);
+    clearBtn.textContent = 'clear';
+  }
+}
+
+{
+  const clearBtn = document.getElementById('clear-btn');
+
+  clearBtn.addEventListener('click', () => {
+    if (clearBtn.textContent === 'undo') {
+      if (clearBackup) {
+        textOld.value = clearBackup.old;
+        textNew.value = clearBackup.new;
+        updateInputStats('stats-old', textOld.value);
+        updateInputStats('stats-new', textNew.value);
+        clearBackup = null;
+        compare();
+        updateHash();
+      }
+      clearTimeout(clearTimer);
+      clearBtn.textContent = 'clear';
+      return;
+    }
+
+    // Save current text and clear
+    clearBackup = { old: textOld.value, new: textNew.value };
+    textOld.value = '';
+    textNew.value = '';
+    updateInputStats('stats-old', '');
+    updateInputStats('stats-new', '');
+    savedMergeStates = {};
+    compare();
+    updateHash();
+
+    // Switch to undo mode
+    clearBtn.textContent = 'undo';
+    clearBtn.style.display = '';
+    clearTimeout(clearTimer);
+    clearTimer = setTimeout(() => {
+      clearBackup = null;
+      clearBtn.textContent = 'clear';
+      if (!textOld.value.trim() && !textNew.value.trim()) {
+        clearBtn.style.display = 'none';
+      }
+    }, 8000);
+  });
+
+  // Cancel undo if user starts typing new content
+  textOld.addEventListener('input', cancelClearUndo);
+  textNew.addEventListener('input', cancelClearUndo);
+}
+
+// ---------------------------------------------------------------------------
 // Theme system
 // ---------------------------------------------------------------------------
 const THEMES = {
@@ -2008,7 +2124,28 @@ themeDropdown.addEventListener('click', e => {
 });
 
 // ---------------------------------------------------------------------------
-// Samples dropdown (shown with ?samples query param, loaded from samples.js)
+// "Try a sample" button in empty state
+// ---------------------------------------------------------------------------
+function loadSample(key) {
+  const samples = window.DIFFER_SAMPLES;
+  if (!samples || !samples[key]) return;
+  cancelClearUndo();
+  textOld.value = samples[key].old;
+  textNew.value = samples[key].new;
+  updateInputStats('stats-old', textOld.value);
+  updateInputStats('stats-new', textNew.value);
+  savedMergeStates = {};
+  compare();
+  updateHash();
+}
+
+function bindTrySampleBtn() {
+  const btn = document.getElementById('try-sample-btn');
+  if (btn) btn.addEventListener('click', () => loadSample('Sample text'));
+}
+
+// ---------------------------------------------------------------------------
+// Samples dropdown
 // ---------------------------------------------------------------------------
 let samplesDropdown, samplesBtn;
 
@@ -2072,20 +2209,17 @@ function initSamplesDropdown(samples) {
     const key = opt.dataset.sample;
 
     if (key === '__clear__') {
+      cancelClearUndo();
       textOld.value = '';
       textNew.value = '';
+      updateInputStats('stats-old', '');
+      updateInputStats('stats-new', '');
+      savedMergeStates = {};
+      compare();
+      updateHash();
     } else {
-      const sample = samples[key];
-      if (!sample) return;
-      textOld.value = sample.old;
-      textNew.value = sample.new;
+      loadSample(key);
     }
-
-    updateInputStats('stats-old', textOld.value);
-    updateInputStats('stats-new', textNew.value);
-    savedMergeStates = {};
-    compare();
-    updateHash();
 
     samplesDropdown.hidden = true;
     samplesBtn.textContent = 'samples \u25be';
@@ -2185,19 +2319,15 @@ function initApp() {
   }
 }
 
-// In dev mode, load samples.js then init; in production, init immediately
-if (SHOW_SAMPLES) {
-  const script = document.createElement('script');
-  script.src = 'samples.js';
-  script.onload = () => {
-    if (window.DIFFER_SAMPLES) initSamplesDropdown(window.DIFFER_SAMPLES);
-    initApp();
-  };
-  script.onerror = () => initApp(); // samples.js missing — init without samples
-  document.head.appendChild(script);
-} else {
+// Always load samples.js (needed for "try a sample" button); dropdown only with ?samples
+const samplesScript = document.createElement('script');
+samplesScript.src = 'samples.js';
+samplesScript.onload = () => {
+  if (SHOW_SAMPLES && window.DIFFER_SAMPLES) initSamplesDropdown(window.DIFFER_SAMPLES);
   initApp();
-}
+};
+samplesScript.onerror = () => { initApp(); };
+document.head.appendChild(samplesScript);
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
