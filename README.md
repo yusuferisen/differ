@@ -238,6 +238,7 @@ A shared link is a complete snapshot — the recipient sees the same diff and al
 ```
 differ/
 ├── index.html              # entire application (self-contained, no build step)
+├── analytics.js            # event tracking wrapper (Aptabase)
 ├── compromise.min.js       # NLP tokenizer (bundled)
 ├── diff.min.js             # diff engine (bundled)
 ├── manifest.json           # PWA manifest
@@ -271,7 +272,5 @@ Open `index.html` directly in a browser. No build step, no server needed. A "try
 
 See [todo.md](todo.md). Key remaining items:
 
-- Semantic change classification via compromise.js (label what *kind* of thing changed)
-- Editable merge (type custom text, not just pick A or B)
-- Event tracking for user interactions (Umami or similar)
 - Native iOS app with Share Sheet integration
+- App naming — "differ" didn't resonate with a non-technical tester; needs broader input

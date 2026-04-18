@@ -77,9 +77,9 @@
 
 ## Analytics & event tracking
 - [x] Cloudflare Web Analytics — privacy-friendly visitor tracking (page views, unique visitors, countries, referrers, browser/OS, Core Web Vitals). Zero cookies, no consent banner. Beacon token added to `index.html`.
-- [ ] Event tracking for user interactions — Cloudflare Web Analytics does not support custom events. Integrate a lightweight event tracker (recommended: Umami, self-hosted on Vercel + free DB tier) to capture:
-  - **High value**: mode switches (paragraph/sentence/clause/line), share link clicks, copy merged result
-  - **Medium value**: option toggles (character-level, smart matching, ignore case, ignore spacing), theme selection, accept-all (« / ») clicks
+- [x] Event tracking for user interactions — Cloudflare Web Analytics does not support custom events. Integrated Aptabase (privacy-friendly, hosted) via a platform-agnostic wrapper (`analytics.js`). Tracks 14 event types:
+  - **High value**: mode switches, share link clicks, copy merged result, merge decisions, custom edits
+  - **Medium value**: option toggles (character-level, smart matching, ignore case, ignore spacing), theme selection, accept-all (« / ») clicks, try sample, clear
   - Skip: textarea input, resize handle, undo, dropdown open/close (too noisy, not actionable)
 
 ## Mobile app
@@ -88,6 +88,14 @@
   - **Architecture challenge**: compromise.js (NLP sentence/clause splitting) has no Swift equivalent. Options: (a) port the tokenizer, (b) use a WKWebView bridge for the NLP layer, or (c) ship a simpler MVP with line-mode only (no NLP dependency) and layer in sentence/clause later.
   - **Suggested MVP scope**: two text fields → line-mode diff only → view-only (no merge) → Share Sheet extension for text capture. Add sentence/clause modes and merge UX as follow-ups.
   - **Effort**: not a single-session task. The diff viewer, merge interaction model (chunk selection + undo stack), and Share Extension (separate target, app groups) each need iterative work.
+
+## Monetization
+- [ ] Explore monetization options. The app is currently free with no accounts or server costs beyond a static site. Possible directions to evaluate:
+  - **Freemium gating**: free for basic use, paid tier for power features (e.g., longer documents, saved history, team sharing)
+  - **Pro Chrome extension**: free web app, paid extension with extra capabilities
+  - **iOS App Store**: paid app or freemium with IAP — App Store is a natural payment channel
+  - **Tip jar / sponsorship**: low-friction option (Buy Me a Coffee, GitHub Sponsors) that doesn't change the product
+  - **Key question**: what's the goal — cover costs, side income, or build a business? The answer shapes which model fits.
 
 ## Chrome extension
 - [x] Context-menu extension (lives in `extension/` subdirectory): select text on any web page → right-click → "Set as Original" or "Set as Modified" → opens differ with both texts pre-loaded
