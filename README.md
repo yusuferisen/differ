@@ -249,6 +249,9 @@ differ/
 ├── icon-maskable-512.png   # app icon (maskable, Android adaptive)
 ├── icon-maskable.svg       # maskable icon (vector)
 ├── samples.js              # sample text pairs (always loaded; dropdown with ?samples)
+├── og-image.png            # Open Graph preview image (1200×630)
+├── robots.txt              # crawler directives
+├── sitemap.xml             # sitemap for search engines
 ├── CNAME                   # custom domain for GitHub Pages (differapp.com)
 ├── extension/              # Chrome extension (Manifest V3)
 │   ├── manifest.json       # extension manifest
