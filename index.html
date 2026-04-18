@@ -1168,7 +1168,7 @@ moreModesDropdown.addEventListener('click', e => {
 const charBtn = document.getElementById('char-btn');
 charBtn.addEventListener('click', () => {
   charEnabled = !charEnabled;
-  analytics.track('toggle_char', { state: charEnabled ? 'on' : 'off' });
+  analytics.track('settings_change', { setting: 'char', value: charEnabled ? 'on' : 'off' });
   charBtn.classList.toggle('selected', charEnabled);
   savePref('char', charEnabled);
   savedMergeStates = {};
@@ -1180,7 +1180,7 @@ charBtn.addEventListener('click', () => {
 const fuzzyBtn = document.getElementById('fuzzy-btn');
 fuzzyBtn.addEventListener('click', () => {
   fuzzyEnabled = !fuzzyEnabled;
-  analytics.track('toggle_smart_matching', { state: fuzzyEnabled ? 'on' : 'off' });
+  analytics.track('settings_change', { setting: 'smart_matching', value: fuzzyEnabled ? 'on' : 'off' });
   fuzzyBtn.classList.toggle('selected', fuzzyEnabled);
   savePref('fuzzy', fuzzyEnabled);
   savedMergeStates = {};
@@ -1191,7 +1191,7 @@ fuzzyBtn.addEventListener('click', () => {
 
 document.getElementById('ignore-case-btn').addEventListener('click', function() {
   ignoreCase = !ignoreCase;
-  analytics.track('toggle_ignore_case', { state: ignoreCase ? 'on' : 'off' });
+  analytics.track('settings_change', { setting: 'ignore_case', value: ignoreCase ? 'on' : 'off' });
   this.classList.toggle('selected', ignoreCase);
   savePref('ignoreCase', ignoreCase);
   savedMergeStates = {};
@@ -1202,7 +1202,7 @@ document.getElementById('ignore-case-btn').addEventListener('click', function() 
 
 document.getElementById('ignore-ws-btn').addEventListener('click', function() {
   ignoreWS = !ignoreWS;
-  analytics.track('toggle_ignore_spacing', { state: ignoreWS ? 'on' : 'off' });
+  analytics.track('settings_change', { setting: 'ignore_spacing', value: ignoreWS ? 'on' : 'off' });
   this.classList.toggle('selected', ignoreWS);
   savePref('ignoreWS', ignoreWS);
   savedMergeStates = {};
@@ -1253,7 +1253,7 @@ function applyHideEqual(equalCount) {
 
 document.getElementById('toggle-equal-btn').addEventListener('click', () => {
   hideEqual = !hideEqual;
-  analytics.track('toggle_show_equal', { state: hideEqual ? 'off' : 'on' });
+  analytics.track('settings_change', { setting: 'show_equal', value: hideEqual ? 'off' : 'on' });
   savePref('hideEqual', hideEqual);
   applyHideEqual();
 });
@@ -1674,9 +1674,6 @@ function applyMergeDecision(seg, chunk, side, skipUndo) {
   const prev = mergeState[seg]?.[chunk] ?? null;
   const next = (prev === side) ? null : side; // toggle off if same side
 
-  if (!skipUndo && next) {
-    analytics.track('merge_decision', { type: side });
-  }
   if (!skipUndo) {
     undoStack.push({ seg, chunk, prev });
     if (undoStack.length > 20) undoStack.shift();
@@ -2070,7 +2067,6 @@ function confirmEdit() {
   if (!mergeState[seg]) mergeState[seg] = {};
   const side = editBarState.side;
   mergeState[seg][chunk] = text ? { custom: text, side } : { custom: '', side };
-  analytics.track('merge_custom_edit');
 
   updateSpansForChunk(seg, chunk);
   mergeActive = true;
@@ -2112,8 +2108,17 @@ document.getElementById('undo-btn').addEventListener('click', () => {
 
 // Copy merged result
 document.getElementById('copy-btn').addEventListener('click', () => {
-  analytics.track('copy_merge');
   const tokens = computeMergedParts();
+  const ms = { left: 0, right: 0, custom: 0, unresolved: 0 };
+  for (const [, chunks] of Object.entries(mergeState)) {
+    for (const [, v] of Object.entries(chunks)) {
+      if (v && typeof v === 'object') ms.custom++;
+      else if (v === 'left') ms.left++;
+      else if (v === 'right') ms.right++;
+    }
+  }
+  for (const t of tokens) { if (t.type === 'unresolved') ms.unresolved++; }
+  analytics.track('copy_merge', ms);
   const delim = modeDelimiter();
   let text = '';
   for (const token of tokens) {
@@ -2240,6 +2245,7 @@ function compare() {
   resetMergeState();
   currentRows = rows;
   renderDiff(rows);
+  trackDiff(currentMode, rows.length, rows.filter(function(r) { return r.type !== 'equal'; }).length);
   updateMergePanel();
   document.getElementById('copy-btn').style.display = '';
   document.getElementById('share-btn').style.display = '';
@@ -2251,6 +2257,9 @@ function debounce(fn, ms) {
 }
 
 const debouncedCompare = debounce(compare, 180);
+const trackDiff = debounce(function(mode, segments, changed) {
+  analytics.track('diff_performed', { mode, segments, changed });
+}, 2000);
 
 const textOld = document.getElementById('text-old');
 const textNew = document.getElementById('text-new');
@@ -2678,6 +2687,10 @@ applyTheme(currentTheme);
 function initApp() {
   if (window.analytics) analytics.init();
   const fromHash = decodeFromHash();
+  analytics.track('page_view', {
+    has_hash: !!fromHash,
+    referrer: document.referrer || undefined
+  });
   if (fromHash) {
     textOld.value = fromHash.o ?? '';
     textNew.value = fromHash.n ?? '';

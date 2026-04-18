@@ -77,10 +77,7 @@
 
 ## Analytics & event tracking
 - [x] Cloudflare Web Analytics — privacy-friendly visitor tracking (page views, unique visitors, countries, referrers, browser/OS, Core Web Vitals). Zero cookies, no consent banner. Beacon token added to `index.html`.
-- [x] Event tracking for user interactions — Cloudflare Web Analytics does not support custom events. Integrated Aptabase (privacy-friendly, hosted) via a platform-agnostic wrapper (`analytics.js`). Tracks 14 event types:
-  - **High value**: mode switches, share link clicks, copy merged result, merge decisions, custom edits
-  - **Medium value**: option toggles (character-level, smart matching, ignore case, ignore spacing), theme selection, accept-all (« / ») clicks, try sample, clear
-  - Skip: textarea input, resize handle, undo, dropdown open/close (too noisy, not actionable)
+- [x] Event tracking for user interactions — Cloudflare Web Analytics does not support custom events. Integrated Aptabase (privacy-friendly, hosted) via a platform-agnostic wrapper (`analytics.js`). Tracks 10 event types covering the full funnel: `page_view` → `diff_performed` → `copy_merge` / `share_link`. See [ANALYTICS.md](ANALYTICS.md) for full details.
 
 ## Mobile app
 - [ ] Despite the PWA and mobile-responsive layout, the experience still isn't great on phones. Explore building a native iOS app. Key considerations from initial assessment:
