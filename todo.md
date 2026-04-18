@@ -34,7 +34,7 @@
 - [x] "Options" dropdown — hide smart matching, character-level, ignore case, ignore spacing behind a dropdown menu to reduce visual noise; reuses theme picker dropdown pattern; options button shows active indicator when non-default settings are on
 - [x] Show changed rows only / show all toggle in toolbar (default: changed only); important for long documents like CVs where equal rows dominate
 - [x] Plain-language UI copy: "5 to decide" not "5 unresolved", "final version" not "merge result", "smart matching" not "fuzzy matching", "sections" not "segments", review all technical labels for general-audience friendliness
-- [ ] Editable merge: currently users can only pick version A or B for each diff chunk. Add the ability to type custom replacement text — a free-text edit option alongside the two existing choices — so the tool works as a full editing aid, not just a picker. UX approach TBD.
+- [x] Editable merge: pencil icon (✎) on unresolved conflicts in the merge panel + tap-to-edit on resolved text. Opens a slim edit bar between header and content. Custom text shown in purple. Integrates with undo, hash persistence, and mode switches.
 
 ## Themes
 - [x] Theme picker: auto/light/dark + named themes (nord, solarized dark, dracula, github) via dropdown button
@@ -67,7 +67,7 @@
 - [x] Options dropdown language cleanup: "normalization" → "when matching", "character-level" → "show character changes"
 - [x] Meta description rewritten for plain-language review framing
 - [x] Clear button in toolbar with 8-second undo window (switches to "undo" after clearing, auto-expires)
-- [ ] Editable merge: currently users can only pick version A or B for each diff chunk. Add the ability to type custom replacement text — a free-text edit option alongside the two existing choices — so the tool works as a full editing aid, not just a picker. UX approach TBD.
+- [x] Editable merge: pencil icon (✎) on unresolved conflicts in the merge panel + tap-to-edit on resolved text. Opens a slim edit bar between header and content. Custom text shown in purple. Integrates with undo, hash persistence, and mode switches.
 
 ## Splitting modes review
 - [ ] Clause mode is not obviously different from sentence mode to non-technical users; line mode often produces identical results to paragraph mode. Evaluate whether to: (a) create better sample texts that clearly showcase when each mode shines, (b) move clause and/or line modes behind an "advanced" settings area, or (c) remove them. Goal is to avoid confusing newcomers with modes that feel redundant.

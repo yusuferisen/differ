@@ -364,6 +364,41 @@
       border-radius: 2px;
     }
 
+    .word-custom {
+      background: var(--purple-bg);
+      color: var(--purple);
+      border-radius: 2px;
+      border-bottom: 1px dashed var(--purple);
+    }
+
+    /* ── Per-chunk edit button in diff table ── */
+    #diff-output [data-seg][data-chunk] { position: relative; }
+    .diff-edit-btn {
+      position: absolute;
+      top: -7px;
+      right: -7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--text);
+      font-size: 10px;
+      line-height: 1;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.12s, background 0.12s;
+      z-index: 3;
+    }
+    .diff-edit-btn:hover {
+      background: var(--color-old);
+      color: #fff;
+      opacity: 1 !important;
+    }
+    #diff-output [data-seg]:hover > .diff-edit-btn { opacity: 0.7; }
+
     /* ── Accept-all row buttons ── */
     .row-accept-left, .row-accept-right {
       position: absolute;
@@ -562,6 +597,99 @@
     }
     .merge-conflict-block:hover > .merge-dismiss { opacity: 0.7; }
 
+    /* ── Edit bar (custom merge text) ── */
+    .merge-edit-bar {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-panel);
+    }
+    .merge-edit-input {
+      flex: 1;
+      font: inherit;
+      font-size: 13px;
+      padding: 4px 8px;
+      border: 1px solid var(--purple);
+      border-radius: 4px;
+      background: var(--bg-main);
+      color: var(--text);
+      outline: none;
+      resize: none;
+      overflow: hidden;
+      min-height: 28px;
+      max-height: 120px;
+      line-height: 1.4;
+    }
+    .merge-edit-input:focus { box-shadow: 0 0 0 2px var(--purple-bg); }
+    .merge-edit-confirm, .merge-edit-cancel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 13px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      min-width: 32px;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .merge-edit-confirm:hover { border-color: var(--purple); color: var(--purple); }
+    .merge-edit-cancel:hover { border-color: var(--color-old); color: var(--color-old); }
+
+    /* Pencil button in merge conflicts */
+    .mci-edit {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--text);
+      font-size: 10px;
+      line-height: 1;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.12s, background 0.12s;
+      vertical-align: middle;
+      flex-shrink: 0;
+      margin-left: 2px;
+    }
+    .mci-edit:hover {
+      background: var(--color-old);
+      color: #fff;
+      opacity: 1 !important;
+    }
+    .merge-conflict-inline:hover .mci-edit { opacity: 0.7; }
+
+    .mcb-edit {
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      line-height: 1.5;
+      display: block;
+      color: var(--text-dim);
+      border-top: 1px solid var(--amber-border);
+      transition: color 0.12s, background 0.12s;
+    }
+    .mcb-edit:hover { background: var(--color-old); color: #fff; }
+
+    /* Clickable resolved/custom text in merge panel */
+    .merge-resolved-text { cursor: pointer; border-radius: 2px; transition: background 0.1s; }
+    .merge-resolved-text:hover { background: var(--purple-bg); }
+    .merge-custom-text {
+      color: var(--purple);
+      border-bottom: 1px dashed var(--purple);
+      cursor: pointer;
+      border-radius: 2px;
+      transition: background 0.1s;
+    }
+    .merge-custom-text:hover { background: var(--purple-bg); }
+
     /* ── Samples picker (shown with ?samples param) ── */
     .samples-picker { position: relative; }
     .samples-dropdown {
@@ -666,6 +794,8 @@
       .diff-row.added .row-accept-left,
       .diff-row.added .row-accept-right { opacity: 0.5; }
       .merge-dismiss { opacity: 0.5; }
+      .mci-edit { opacity: 0.5; }
+      .diff-edit-btn { opacity: 0.5; }
     }
 
     /* ── Responsive: tablet (≤768px) ── */
@@ -865,6 +995,11 @@
     <button class="merge-undo-btn" id="undo-btn" style="display:none">↩ undo</button>
     <button class="merge-copy-btn" id="copy-btn" style="display:none">copy</button>
   </div>
+  <div class="merge-edit-bar" id="merge-edit-bar" style="display:none">
+    <textarea class="merge-edit-input" id="merge-edit-input" rows="1" placeholder="type your version…"></textarea>
+    <button class="merge-edit-confirm" id="merge-edit-confirm">✓</button>
+    <button class="merge-edit-cancel" id="merge-edit-cancel">✕</button>
+  </div>
   <div id="merge-text"></div>
 </div>
 
@@ -910,7 +1045,7 @@ let hideEqual    = loadPref('hideEqual', true);
 
 // Merge state
 let currentRows      = [];
-let mergeState       = {};    // {[segIdx]: {[chunkIdx]: 'left'|'right'|null}}
+let mergeState       = {};    // {[segIdx]: {[chunkIdx]: 'left'|'right'|null|{custom:string}}}
 let undoStack        = [];    // [{seg, chunk, prev}] or [{batch:true, seg, chunks}]
 let mergeActive      = false;
 let savedMergeStates = {};    // {[mode]: {mergeState, undoStack}} — persists across mode switches
@@ -1228,18 +1363,38 @@ function computeDiff(segs1, segs2, fuzzy = false) {
 // ---------------------------------------------------------------------------
 function resolveSpanClass(baseClass, decision, side) {
   if (decision === null)  return baseClass;
+  if (typeof decision === 'object') {
+    return decision.side === side ? 'word-custom' : 'word-rejected';
+  }
   if (decision === side)  return 'word-settled';
   return 'word-rejected';
 }
 
 function makeHighlightSpan(value, baseClass, segIdx, chunkIdx, side) {
   const span = document.createElement('span');
-  span.textContent    = value;
-  span.dataset.seg    = segIdx;
-  span.dataset.chunk  = chunkIdx;
-  span.dataset.side   = side;
-  span.dataset.base   = baseClass;
+  span.appendChild(document.createTextNode(value));
+  span.dataset.seg          = segIdx;
+  span.dataset.chunk        = chunkIdx;
+  span.dataset.side         = side;
+  span.dataset.base         = baseClass;
+  span.dataset.originalText = value;
   span.className = resolveSpanClass(baseClass, mergeState[segIdx]?.[chunkIdx] ?? null, side);
+
+  const editBtn = document.createElement('span');
+  editBtn.className = 'diff-edit-btn';
+  editBtn.textContent = '+';
+  editBtn.dataset.editSeg     = segIdx;
+  editBtn.dataset.editChunk   = chunkIdx;
+  editBtn.dataset.editPrefill = value;
+  editBtn.dataset.editSide    = side;
+  span.appendChild(editBtn);
+
+  // Apply custom text if already set
+  const dec = mergeState[segIdx]?.[chunkIdx] ?? null;
+  if (dec !== null && typeof dec === 'object' && dec.side === side) {
+    span.firstChild.textContent = dec.custom;
+  }
+
   return span;
 }
 
@@ -1287,6 +1442,12 @@ function updateSpansForChunk(segIdx, chunkIdx) {
   document.querySelectorAll(`#diff-output [data-seg="${segIdx}"][data-chunk="${chunkIdx}"]`)
     .forEach(span => {
       span.className = resolveSpanClass(span.dataset.base, decision, span.dataset.side);
+      // Show custom text on the source side, restore original on other side
+      if (decision !== null && typeof decision === 'object' && decision.side === span.dataset.side) {
+        span.firstChild.textContent = decision.custom;
+      } else if (span.dataset.originalText) {
+        span.firstChild.textContent = span.dataset.originalText;
+      }
     });
 }
 
@@ -1351,7 +1512,7 @@ function renderDiff(rows) {
   const hint = document.createElement('div');
   hint.className = 'merge-hint';
   hint.id = 'merge-hint';
-  hint.textContent = 'click any highlighted word to choose that version · use « » to choose an entire row';
+  hint.textContent = 'click any highlighted word to choose that version · use « » for an entire row · use + to write your own';
   output.appendChild(hint);
 
   for (const row of rows) {
@@ -1395,6 +1556,11 @@ function reapplyMergeVisuals() {
   document.querySelectorAll('#diff-output [data-seg][data-chunk]').forEach(span => {
     const decision = mergeState[+span.dataset.seg]?.[+span.dataset.chunk] ?? null;
     span.className = resolveSpanClass(span.dataset.base, decision, span.dataset.side);
+    if (decision !== null && typeof decision === 'object' && decision.side === span.dataset.side) {
+      span.firstChild.textContent = decision.custom;
+    } else if (span.dataset.originalText) {
+      span.firstChild.textContent = span.dataset.originalText;
+    }
   });
 }
 
@@ -1402,6 +1568,7 @@ function resetMergeState() {
   mergeState  = {};
   undoStack   = [];
   mergeActive = false;
+  if (editBarState) closeEditBar();
 }
 
 function clearMergePanel() {
@@ -1451,8 +1618,10 @@ function computeMergedParts() {
       tokens.push({ type: 'text', text: row.left });
     } else if (row.type === 'removed') {
       const dec = mergeState[row.segIdx]?.[0] ?? null;
-      if (dec === 'left') {
-        tokens.push({ type: 'text', text: row.left });
+      if (dec !== null && typeof dec === 'object') {
+        if (dec.custom) tokens.push({ type: 'text', text: dec.custom, isCustom: true, side: dec.side, segIdx: row.segIdx, chunkIdx: 0 });
+      } else if (dec === 'left') {
+        tokens.push({ type: 'text', text: row.left, side: 'left', segIdx: row.segIdx, chunkIdx: 0 });
       } else if (dec === null) {
         tokens.push({ type: 'unresolved', old: row.left, new: null,
           long: row.left.length > 80, segIdx: row.segIdx, chunkIdx: 0 });
@@ -1460,8 +1629,10 @@ function computeMergedParts() {
       // dec === 'right': exclude (accept deletion)
     } else if (row.type === 'added') {
       const dec = mergeState[row.segIdx]?.[0] ?? null;
-      if (dec === 'right') {
-        tokens.push({ type: 'text', text: row.right });
+      if (dec !== null && typeof dec === 'object') {
+        if (dec.custom) tokens.push({ type: 'text', text: dec.custom, isCustom: true, side: dec.side, segIdx: row.segIdx, chunkIdx: 0 });
+      } else if (dec === 'right') {
+        tokens.push({ type: 'text', text: row.right, side: 'right', segIdx: row.segIdx, chunkIdx: 0 });
       } else if (dec === null) {
         tokens.push({ type: 'unresolved', old: null, new: row.right,
           long: row.right.length > 80, segIdx: row.segIdx, chunkIdx: 0 });
@@ -1481,8 +1652,10 @@ function computeMergedParts() {
           if (!nextIsAdded) {
             // Pure removal
             const dec = mergeState[segIdx]?.[chunkIdx] ?? null;
-            if (dec === 'left') {
-              tokens.push({ type: 'text', text: part.value });
+            if (dec !== null && typeof dec === 'object') {
+              if (dec.custom) tokens.push({ type: 'text', text: dec.custom, isCustom: true, side: dec.side, segIdx, chunkIdx });
+            } else if (dec === 'left') {
+              tokens.push({ type: 'text', text: part.value, side: 'left', segIdx, chunkIdx });
             } else if (dec === null) {
               tokens.push({ type: 'unresolved', old: part.value, new: null,
                 long: part.value.length > 80, segIdx, chunkIdx });
@@ -1497,12 +1670,14 @@ function computeMergedParts() {
           const newVal = part.value;
           const dec = mergeState[segIdx]?.[chunkIdx] ?? null;
 
-          if (oldVal !== null) {
+          if (dec !== null && typeof dec === 'object') {
+            if (dec.custom) tokens.push({ type: 'text', text: dec.custom, isCustom: true, side: dec.side, segIdx, chunkIdx });
+          } else if (oldVal !== null) {
             // Pair (replacement)
             if (dec === 'left') {
-              tokens.push({ type: 'text', text: oldVal });
+              tokens.push({ type: 'text', text: oldVal, side: 'left', segIdx, chunkIdx });
             } else if (dec === 'right') {
-              tokens.push({ type: 'text', text: newVal });
+              tokens.push({ type: 'text', text: newVal, side: 'right', segIdx, chunkIdx });
             } else {
               tokens.push({ type: 'unresolved', old: oldVal, new: newVal,
                 long: (oldVal.length + newVal.length) > 80, segIdx, chunkIdx });
@@ -1510,7 +1685,7 @@ function computeMergedParts() {
           } else {
             // Pure insertion
             if (dec === 'right') {
-              tokens.push({ type: 'text', text: newVal });
+              tokens.push({ type: 'text', text: newVal, side: 'right', segIdx, chunkIdx });
             } else if (dec === null) {
               tokens.push({ type: 'unresolved', old: null, new: newVal,
                 long: newVal.length > 80, segIdx, chunkIdx });
@@ -1524,16 +1699,20 @@ function computeMergedParts() {
       // changed row with only one side (non-fuzzy uneven pairing)
       if (row.left && !row.right) {
         const dec = mergeState[row.segIdx]?.[0] ?? null;
-        if (dec === 'left') {
-          tokens.push({ type: 'text', text: row.left });
+        if (dec !== null && typeof dec === 'object') {
+          if (dec.custom) tokens.push({ type: 'text', text: dec.custom, isCustom: true, side: dec.side, segIdx: row.segIdx, chunkIdx: 0 });
+        } else if (dec === 'left') {
+          tokens.push({ type: 'text', text: row.left, side: 'left', segIdx: row.segIdx, chunkIdx: 0 });
         } else if (dec === null) {
           tokens.push({ type: 'unresolved', old: row.left, new: null,
             long: row.left.length > 80, segIdx: row.segIdx, chunkIdx: 0 });
         }
       } else if (row.right && !row.left) {
         const dec = mergeState[row.segIdx]?.[0] ?? null;
-        if (dec === 'right') {
-          tokens.push({ type: 'text', text: row.right });
+        if (dec !== null && typeof dec === 'object') {
+          if (dec.custom) tokens.push({ type: 'text', text: dec.custom, isCustom: true, side: dec.side, segIdx: row.segIdx, chunkIdx: 0 });
+        } else if (dec === 'right') {
+          tokens.push({ type: 'text', text: row.right, side: 'right', segIdx: row.segIdx, chunkIdx: 0 });
         } else if (dec === null) {
           tokens.push({ type: 'unresolved', old: null, new: row.right,
             long: row.right.length > 80, segIdx: row.segIdx, chunkIdx: 0 });
@@ -1574,13 +1753,26 @@ function updateMergePanel() {
 
   for (const token of tokens) {
     if (token.type === 'text') {
-      mergeText.appendChild(document.createTextNode(token.text));
+      if (token.segIdx !== undefined) {
+        // Resolved or custom text — make it clickable for editing
+        const span = document.createElement('span');
+        span.className = token.isCustom ? 'merge-custom-text' : 'merge-resolved-text';
+        span.textContent = token.text;
+        span.dataset.editSeg     = token.segIdx;
+        span.dataset.editChunk   = token.chunkIdx;
+        span.dataset.editPrefill = token.text;
+        span.dataset.editSide    = token.side || 'right';
+        mergeText.appendChild(span);
+      } else {
+        mergeText.appendChild(document.createTextNode(token.text));
+      }
     } else if (token.type === 'sep') {
       mergeText.appendChild(document.createTextNode(modeDelimiter()));
     } else {
       unresolvedCount++;
       const oldText = token.old ?? '';
       const newText = token.new ?? '';
+      const prefill = newText || oldText;
 
       if (token.long) {
         const block = document.createElement('div');
@@ -1604,6 +1796,16 @@ function updateMergePanel() {
           d.dataset.resolveSide  = 'right';
           block.appendChild(d);
         }
+        // Edit row
+        const editRow = document.createElement('div');
+        editRow.className = 'mcb-edit';
+        editRow.textContent = '+ write your own';
+        editRow.dataset.editSeg     = token.segIdx;
+        editRow.dataset.editChunk   = token.chunkIdx;
+        editRow.dataset.editPrefill = prefill;
+        editRow.dataset.editSide    = newText ? 'right' : 'left';
+        block.appendChild(editRow);
+
         if (!oldText || !newText) {
           block.appendChild(makeDismissBtn(token.segIdx, token.chunkIdx, oldText ? 'right' : 'left'));
         }
@@ -1632,6 +1834,16 @@ function updateMergePanel() {
           s.dataset.resolveSide  = 'right';
           wrap.appendChild(s);
         }
+        // Pencil edit button
+        const editBtn = document.createElement('span');
+        editBtn.className = 'mci-edit';
+        editBtn.textContent = '+';
+        editBtn.dataset.editSeg     = token.segIdx;
+        editBtn.dataset.editChunk   = token.chunkIdx;
+        editBtn.dataset.editPrefill = prefill;
+        editBtn.dataset.editSide    = newText ? 'right' : 'left';
+        wrap.appendChild(editBtn);
+
         if (!oldText || !newText) {
           wrap.appendChild(makeDismissBtn(token.segIdx, token.chunkIdx, oldText ? 'right' : 'left'));
         }
@@ -1648,29 +1860,44 @@ function updateMergePanel() {
 
 // Click: highlighted spans in diff table → merge decision
 document.getElementById('diff-output').addEventListener('click', e => {
+  // Per-chunk edit buttons
+  const diffEditBtn = e.target.closest('.diff-edit-btn');
+  if (diffEditBtn) {
+    openEditBar(+diffEditBtn.dataset.editSeg, +diffEditBtn.dataset.editChunk, diffEditBtn.dataset.editPrefill, diffEditBtn.dataset.editSide);
+    return;
+  }
+
+  // Close stale edit bar if open
+  if (editBarState) closeEditBar();
+
   // Accept-all buttons
   const acceptBtn = e.target.closest('.row-accept-left, .row-accept-right');
   if (acceptBtn) {
     const seg   = +acceptBtn.dataset.seg;
     const side  = acceptBtn.dataset.side;
     const count = +acceptBtn.dataset.count;
+    if (!mergeState[seg]) mergeState[seg] = {};
+    // Toggle: if all non-custom chunks already set to this side, unset them
+    let allSet = true;
+    let hasNonCustom = false;
+    for (let c = 0; c < count; c++) {
+      const cur = mergeState[seg]?.[c] ?? null;
+      if (cur !== null && typeof cur === 'object') continue;
+      hasNonCustom = true;
+      if (cur !== side) { allSet = false; break; }
+    }
+    if (!hasNonCustom) return; // all chunks are custom, nothing to do
+    const newValue = allSet ? null : side;
     const chunks = [];
     for (let c = 0; c < count; c++) {
-      chunks.push({ chunkIdx: c, prev: mergeState[seg]?.[c] ?? null });
-    }
-    undoStack.push({ batch: true, seg, chunks });
-    if (undoStack.length > 20) undoStack.shift();
-    if (!mergeState[seg]) mergeState[seg] = {};
-    // Toggle: if all chunks already set to this side, unset them
-    let allSet = true;
-    for (let c = 0; c < count; c++) {
-      if ((mergeState[seg]?.[c] ?? null) !== side) { allSet = false; break; }
-    }
-    const newValue = allSet ? null : side;
-    for (let c = 0; c < count; c++) {
+      const cur = mergeState[seg]?.[c] ?? null;
+      if (cur !== null && typeof cur === 'object') continue;
+      chunks.push({ chunkIdx: c, prev: cur });
       mergeState[seg][c] = newValue;
       updateSpansForChunk(seg, c);
     }
+    undoStack.push({ batch: true, seg, chunks });
+    if (undoStack.length > 20) undoStack.shift();
     mergeActive = true;
     hideMergeHint();
     updateMergePanel();
@@ -1684,11 +1911,88 @@ document.getElementById('diff-output').addEventListener('click', e => {
   applyMergeDecision(+span.dataset.seg, +span.dataset.chunk, span.dataset.side);
 });
 
-// Click: block-format conflicts in merge panel
+// Click: block-format conflicts in merge panel + edit triggers
 document.getElementById('merge-panel').addEventListener('click', e => {
+  // Edit triggers (pencil icon, custom text, resolved text)
+  const editEl = e.target.closest('[data-edit-seg]');
+  if (editEl) {
+    openEditBar(+editEl.dataset.editSeg, +editEl.dataset.editChunk, editEl.dataset.editPrefill || '', editEl.dataset.editSide);
+    return;
+  }
+  // Existing resolve triggers
   const el = e.target.closest('[data-resolve-seg]');
   if (!el) return;
   applyMergeDecision(+el.dataset.resolveSeg, +el.dataset.resolveChunk, el.dataset.resolveSide);
+});
+
+// ---------------------------------------------------------------------------
+// Merge edit bar (custom text)
+// ---------------------------------------------------------------------------
+let editBarState = null; // {seg, chunk} when editing, null when closed
+
+function openEditBar(seg, chunk, prefill, side) {
+  editBarState = { seg, chunk, side: side || 'right' };
+  const bar   = document.getElementById('merge-edit-bar');
+  const input = document.getElementById('merge-edit-input');
+  bar.style.display = 'flex';
+  input.value = prefill;
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+  input.focus();
+  input.select();
+}
+
+function closeEditBar(revert) {
+  if (revert && editBarState) {
+    const { seg, chunk } = editBarState;
+    const dec = mergeState[seg]?.[chunk] ?? null;
+    if (dec !== null) {
+      // Revert any decision (custom or picked) back to unresolved
+      undoStack.push({ seg, chunk, prev: dec });
+      if (undoStack.length > 20) undoStack.shift();
+      mergeState[seg][chunk] = null;
+      updateSpansForChunk(seg, chunk);
+      updateMergePanel();
+      updateHash();
+    }
+  }
+  editBarState = null;
+  const bar   = document.getElementById('merge-edit-bar');
+  const input = document.getElementById('merge-edit-input');
+  bar.style.display = 'none';
+  input.value = '';
+}
+
+function confirmEdit() {
+  if (!editBarState) return;
+  const { seg, chunk } = editBarState;
+  const text = document.getElementById('merge-edit-input').value.trim();
+
+  const prev = mergeState[seg]?.[chunk] ?? null;
+  undoStack.push({ seg, chunk, prev });
+  if (undoStack.length > 20) undoStack.shift();
+
+  if (!mergeState[seg]) mergeState[seg] = {};
+  const side = editBarState.side;
+  mergeState[seg][chunk] = text ? { custom: text, side } : { custom: '', side };
+
+  updateSpansForChunk(seg, chunk);
+  mergeActive = true;
+  hideMergeHint();
+  updateMergePanel();
+  updateHash();
+  closeEditBar();
+}
+
+document.getElementById('merge-edit-confirm').addEventListener('click', confirmEdit);
+document.getElementById('merge-edit-cancel').addEventListener('click', () => closeEditBar(true));
+document.getElementById('merge-edit-input').addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); confirmEdit(); }
+  if (e.key === 'Escape') { e.preventDefault(); closeEditBar(true); }
+});
+document.getElementById('merge-edit-input').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
 });
 
 // Undo
