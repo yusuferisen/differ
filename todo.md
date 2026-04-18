@@ -1,7 +1,7 @@
 # differ — roadmap
 
 ## Research
-- [ ] Semantic change classification: investigate whether compromise.js (already loaded) can label what *kind* of thing changed per diff chunk — number, date, name, place, sentiment, etc. — and whether surfacing these labels (e.g. "date changed", "name changed") is useful to non-technical users. Assess feasibility fully in-browser with no additional libraries. NLTK is Python-only and has no browser port; compromise.js covers NER, dates, values, and basic sentiment natively.
+- [x] ~~Semantic change classification~~: investigated — compromise.js can detect entity types (dates, names, numbers, places, money) in changed spans, but the labels don't help editors decide which version to keep. Won't do.
 
 ## Core diff engine
 - [x] Side-by-side diff panels
