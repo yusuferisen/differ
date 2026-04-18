@@ -70,7 +70,7 @@
 - [x] Editable merge: pencil icon (✎) on unresolved conflicts in the merge panel + tap-to-edit on resolved text. Opens a slim edit bar between header and content. Custom text shown in purple. Integrates with undo, hash persistence, and mode switches.
 
 ## Splitting modes review
-- [ ] Clause mode is not obviously different from sentence mode to non-technical users; line mode often produces identical results to paragraph mode. Evaluate whether to: (a) create better sample texts that clearly showcase when each mode shines, (b) move clause and/or line modes behind an "advanced" settings area, or (c) remove them. Goal is to avoid confusing newcomers with modes that feel redundant.
+- [x] Clause mode is not obviously different from sentence mode to non-technical users; line mode often produces identical results to paragraph mode. Solution: paragraph and sentence remain as primary buttons; clause and line moved behind a "more" dropdown to reduce cognitive load while keeping all modes accessible.
 
 ## Naming
 - [ ] "differ" didn't resonate with a non-technical tester — the name felt meaningless without context. Evaluate whether the app needs a different name. This likely needs input from multiple people; add to discussion list.

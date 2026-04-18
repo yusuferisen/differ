@@ -1,4 +1,4 @@
-const CACHE = 'differ-v5';
+const CACHE = 'differ-v6';
 const ASSETS = [
   './',
   './index.html',
