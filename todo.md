@@ -90,12 +90,20 @@
   - **Effort**: not a single-session task. The diff viewer, merge interaction model (chunk selection + undo stack), and Share Extension (separate target, app groups) each need iterative work.
 
 ## Monetization
-- [ ] Explore monetization options. The app is currently free with no accounts or server costs beyond a static site. Possible directions to evaluate:
-  - **Freemium gating**: free for basic use, paid tier for power features (e.g., longer documents, saved history, team sharing)
-  - **Pro Chrome extension**: free web app, paid extension with extra capabilities
-  - **iOS App Store**: paid app or freemium with IAP — App Store is a natural payment channel
-  - **Tip jar / sponsorship**: low-friction option (Buy Me a Coffee, GitHub Sponsors) that doesn't change the product
-  - **Key question**: what's the goal — cover costs, side income, or build a business? The answer shapes which model fits.
+Goal: cover costs and make some side income — not building a business. No backend, no accounts, no subscriptions. All current features stay free.
+
+- [ ] **Tip jar**: add a Buy Me a Coffee or Ko-fi link (footer or after completing a merge). Near-zero effort, worth doing regardless of other options.
+- [ ] **Pro features (one-time purchase)**: use LemonSqueezy or Gumroad for license keys, unlock features client-side. Target price $5–8 one-time. Candidate pro features:
+  - [ ] File upload — drag in `.txt`, `.docx`, or `.pdf` files instead of copy-pasting. Most compelling upgrade; removes real friction for longer documents.
+  - [ ] Export — save the diff view as a styled PDF or HTML document. Useful for editors, teachers, legal review.
+  - [ ] Comparison history — store past comparisons in IndexedDB, revisit later.
+  - [ ] Batch mode — compare multiple document pairs in one session.
+- [ ] **iOS App Store** (later): paid app ($3–5 one-time) if/when the native app is built. App Store is a natural payment channel.
+
+Decided against for now:
+- Ads: not worth it until there's meaningful traffic.
+- Subscriptions: overkill for a static client-side tool.
+- Gating existing features: would feel like a downgrade to current users.
 
 ## Chrome extension
 - [x] Context-menu extension (lives in `extension/` subdirectory): select text on any web page → right-click → "Set as Original" or "Set as Modified" → opens differ with both texts pre-loaded
