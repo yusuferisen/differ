@@ -11,6 +11,7 @@
   <title>differ</title>
   <script src="compromise.min.js"></script>
   <script src="diff.min.js"></script>
+  <script src="analytics.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1138,6 +1139,7 @@ document.getElementById('mode-group').addEventListener('click', e => {
   if (!btn || btn.id === 'more-modes-btn') return;
   const newMode = btn.dataset.mode;
   if (!newMode) return;
+  analytics.track('mode_switch', { mode: newMode });
   switchMode(newMode);
 });
 
@@ -1157,6 +1159,7 @@ moreModesBtn.addEventListener('click', e => {
 moreModesDropdown.addEventListener('click', e => {
   const opt = e.target.closest('.theme-option');
   if (!opt || !opt.dataset.mode) return;
+  analytics.track('mode_switch', { mode: opt.dataset.mode });
   switchMode(opt.dataset.mode);
   moreModesDropdown.hidden = true;
   updateMoreBtnLabel();
@@ -1165,6 +1168,7 @@ moreModesDropdown.addEventListener('click', e => {
 const charBtn = document.getElementById('char-btn');
 charBtn.addEventListener('click', () => {
   charEnabled = !charEnabled;
+  analytics.track('toggle_char', { state: charEnabled ? 'on' : 'off' });
   charBtn.classList.toggle('selected', charEnabled);
   savePref('char', charEnabled);
   savedMergeStates = {};
@@ -1176,6 +1180,7 @@ charBtn.addEventListener('click', () => {
 const fuzzyBtn = document.getElementById('fuzzy-btn');
 fuzzyBtn.addEventListener('click', () => {
   fuzzyEnabled = !fuzzyEnabled;
+  analytics.track('toggle_smart_matching', { state: fuzzyEnabled ? 'on' : 'off' });
   fuzzyBtn.classList.toggle('selected', fuzzyEnabled);
   savePref('fuzzy', fuzzyEnabled);
   savedMergeStates = {};
@@ -1186,6 +1191,7 @@ fuzzyBtn.addEventListener('click', () => {
 
 document.getElementById('ignore-case-btn').addEventListener('click', function() {
   ignoreCase = !ignoreCase;
+  analytics.track('toggle_ignore_case', { state: ignoreCase ? 'on' : 'off' });
   this.classList.toggle('selected', ignoreCase);
   savePref('ignoreCase', ignoreCase);
   savedMergeStates = {};
@@ -1196,6 +1202,7 @@ document.getElementById('ignore-case-btn').addEventListener('click', function() 
 
 document.getElementById('ignore-ws-btn').addEventListener('click', function() {
   ignoreWS = !ignoreWS;
+  analytics.track('toggle_ignore_spacing', { state: ignoreWS ? 'on' : 'off' });
   this.classList.toggle('selected', ignoreWS);
   savePref('ignoreWS', ignoreWS);
   savedMergeStates = {};
@@ -1246,6 +1253,7 @@ function applyHideEqual(equalCount) {
 
 document.getElementById('toggle-equal-btn').addEventListener('click', () => {
   hideEqual = !hideEqual;
+  analytics.track('toggle_show_equal', { state: hideEqual ? 'off' : 'on' });
   savePref('hideEqual', hideEqual);
   applyHideEqual();
 });
@@ -1666,6 +1674,9 @@ function applyMergeDecision(seg, chunk, side, skipUndo) {
   const prev = mergeState[seg]?.[chunk] ?? null;
   const next = (prev === side) ? null : side; // toggle off if same side
 
+  if (!skipUndo && next) {
+    analytics.track('merge_decision', { type: side });
+  }
   if (!skipUndo) {
     undoStack.push({ seg, chunk, prev });
     if (undoStack.length > 20) undoStack.shift();
@@ -1971,6 +1982,7 @@ document.getElementById('diff-output').addEventListener('click', e => {
     }
     if (!hasNonCustom) return; // all chunks are custom, nothing to do
     const newValue = allSet ? null : side;
+    if (!allSet) analytics.track('accept_all', { side: side });
     const chunks = [];
     for (let c = 0; c < count; c++) {
       const cur = mergeState[seg]?.[c] ?? null;
@@ -2058,6 +2070,7 @@ function confirmEdit() {
   if (!mergeState[seg]) mergeState[seg] = {};
   const side = editBarState.side;
   mergeState[seg][chunk] = text ? { custom: text, side } : { custom: '', side };
+  analytics.track('merge_custom_edit');
 
   updateSpansForChunk(seg, chunk);
   mergeActive = true;
@@ -2099,6 +2112,7 @@ document.getElementById('undo-btn').addEventListener('click', () => {
 
 // Copy merged result
 document.getElementById('copy-btn').addEventListener('click', () => {
+  analytics.track('copy_merge');
   const tokens = computeMergedParts();
   const delim = modeDelimiter();
   let text = '';
@@ -2313,11 +2327,13 @@ document.getElementById('share-btn').addEventListener('click', () => {
   const btn = document.getElementById('share-btn');
 
   if (('#' + encoded).length >= 8000) {
+    analytics.track('share_link', { status: 'too_long' });
     const len = Math.round(('#' + encoded).length / 100) * 100;
     btn.textContent = `too long to share (${len.toLocaleString()} / 8,000 characters)`;
     setTimeout(() => { btn.textContent = 'share link'; }, 3500);
     return;
   }
+  analytics.track('share_link');
 
   const flash = msg => { btn.textContent = msg; setTimeout(() => { btn.textContent = 'share link'; }, 1500); };
   navigator.clipboard.writeText(url).then(() => flash('copied!')).catch(() => {
@@ -2362,6 +2378,7 @@ function cancelClearUndo() {
     }
 
     // Save current text and clear
+    analytics.track('clear');
     clearBackup = { old: textOld.value, new: textNew.value };
     textOld.value = '';
     textNew.value = '';
@@ -2507,6 +2524,7 @@ themeBtn.addEventListener('click', e => {
 themeDropdown.addEventListener('click', e => {
   const opt = e.target.closest('.theme-option');
   if (!opt) return;
+  analytics.track('theme_select', { theme: opt.dataset.theme });
   applyTheme(opt.dataset.theme);
   themeDropdown.hidden = true;
   themeBtn.textContent = 'theme ▾';
@@ -2530,7 +2548,7 @@ function loadSample(key) {
 
 function bindTrySampleBtn() {
   const btn = document.getElementById('try-sample-btn');
-  if (btn) btn.addEventListener('click', () => loadSample('Sample text'));
+  if (btn) btn.addEventListener('click', () => { analytics.track('try_sample'); loadSample('Sample text'); });
 }
 
 // ---------------------------------------------------------------------------
@@ -2658,6 +2676,7 @@ applyTheme(currentTheme);
 
 // Initialize: restore from hash if present, otherwise start empty
 function initApp() {
+  if (window.analytics) analytics.init();
   const fromHash = decodeFromHash();
   if (fromHash) {
     textOld.value = fromHash.o ?? '';
