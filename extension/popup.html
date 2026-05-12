@@ -7,6 +7,13 @@
 <body>
   <h1>differ</h1>
 
+  <div id="gdocs-section" hidden>
+    <p class="hint">If this Google Doc has open suggestions, compare its <strong>original</strong> text against a version with <strong>all suggestions accepted</strong>.</p>
+    <button id="gdocs-btn">Compare suggestions in Differ</button>
+    <p id="gdocs-status" class="status"></p>
+    <div class="divider"><span>or compare text manually</span></div>
+  </div>
+
   <label for="original">Original</label>
   <div class="textarea-wrap">
     <textarea id="original" placeholder="Select text on any page, right-click → Set as Original" spellcheck="false"></textarea>
@@ -21,6 +28,7 @@
 
   <button id="open-btn">Open in Differ</button>
 
+  <script src="docx.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

@@ -114,3 +114,74 @@ textarea:focus {
 #open-btn:hover {
   background: #4aa76b;
 }
+
+/* --- Google Docs section ------------------------------------------------- */
+
+#gdocs-section {
+  margin-bottom: 14px;
+}
+
+.hint {
+  font-size: 12px;
+  line-height: 1.45;
+  color: #9aa3b2;
+  margin-bottom: 10px;
+}
+
+.hint strong {
+  color: #c8cdd5;
+  font-weight: 600;
+}
+
+#gdocs-btn {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  background: #3a6ea5;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+#gdocs-btn:hover:not(:disabled) {
+  background: #4a82bf;
+}
+
+#gdocs-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.status {
+  font-size: 11px;
+  line-height: 1.4;
+  color: #7a8394;
+  margin-top: 6px;
+  min-height: 14px;
+}
+
+.status.error {
+  color: #d98c8c;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  color: #5c6370;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #3a3f47;
+}

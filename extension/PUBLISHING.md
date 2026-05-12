@@ -36,6 +36,7 @@ The zip should contain:
 manifest.json
 background.js
 content.js
+docx.js
 popup.html
 popup.css
 popup.js
@@ -111,10 +112,10 @@ This is the banner shown on the store listing. Create a simple branded image wit
 
 | Field | Value |
 |---|---|
-| **Single purpose description** | "Captures selected text from web pages and opens it in the Differ text comparison tool" |
-| **Host permissions justification** | "The extension needs access to differapp.com to inject captured texts into the Differ web app's text fields" |
+| **Single purpose description** | "Captures text from web pages — including the original-vs-suggested versions of a Google Doc — and opens it in the Differ text comparison tool" |
+| **Host permissions justification** | "differapp.com: inject captured texts into the Differ web app's text fields. docs.google.com / googleusercontent.com (optional, requested at runtime): download the Google Doc the user is viewing so the extension can extract its open suggestions and load original-vs-accepted into Differ." |
 | **Are you using remote code?** | No |
-| **Data usage disclosures** | The extension does not collect or transmit user data. Check "No" for all data type categories. |
+| **Data usage disclosures** | The extension does not collect or transmit user data. Check "No" for all data type categories. (The Google Docs feature downloads the user's own document into their own browser; nothing is sent to a third party.) |
 | **Privacy policy URL** | Link to hosted privacy policy (e.g., `https://differapp.com/privacy` or the raw GitHub URL of `store/privacy-policy.md`) |
 
 **Permission justifications** (if prompted):
@@ -123,8 +124,9 @@ This is the banner shown on the store listing. Create a simple branded image wit
 |---|---|
 | `contextMenus` | Adds right-click menu items for capturing selected text |
 | `storage` | Temporarily stores captured texts locally so they persist across tabs |
-| `activeTab` | Reads the full selected text from the page when the user right-clicks |
+| `activeTab` | Reads the full selected text from the page when the user right-clicks; reads the current tab's URL so the popup can detect a Google Doc |
 | `scripting` | Injects a script into the Differ web app to fill text fields with captured texts |
+| `optional_host_permissions` (docs.google.com, googleusercontent.com) | Requested at runtime only when the user clicks "Compare suggestions in Differ" — downloads the Google Doc being viewed so the extension can read its suggested edits |
 
 ### Distribution tab
 

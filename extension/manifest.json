@@ -1,11 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Differ",
-  "version": "1.0",
-  "description": "Select text on any page and compare it in Differ",
+  "version": "1.1",
+  "description": "Compare text from any web page, or a Google Doc's suggestions, in Differ — a text diff and merge tool",
   "homepage_url": "https://differapp.com",
   "permissions": ["contextMenus", "storage", "activeTab", "scripting"],
   "host_permissions": ["https://differapp.com/*"],
+  "optional_host_permissions": [
+    "https://docs.google.com/*",
+    "https://*.googleusercontent.com/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },

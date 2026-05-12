@@ -109,3 +109,7 @@ Decided against for now:
   - [x] Content script injection into specific tab (fills `#text-old` / `#text-new`)
   - [x] Popup: Original + Modified textareas, "Open in Differ" button, dark theme
   - [x] Icons generated from main app icon (16, 48, 128px)
+- [x] Google Docs suggestions: on a `docs.google.com/document/...` page, popup shows "Compare suggestions in Differ" → downloads the doc as `.docx`, parses tracked changes client-side (`docx.js`: hand-rolled ZIP reader + OOXML walker, no deps/OAuth), opens differ with original vs. all-suggestions-accepted. Optional `docs.google.com` host permission requested on first use.
+  - [x] Verified in a real logged-in browser — the credentialed `.docx` fetch authenticates fine from the extension origin
+  - [ ] Reliably detect "has open suggestions" without downloading (currently shows on any doc, reports "no suggestions" after fetch) — not feasible via DOM (canvas-rendered); would need a cheap signal
+  - extracted text is plain runs only — tables/lists/headers-footers lose structure; not worth handling (out of scope for a text-diff app)

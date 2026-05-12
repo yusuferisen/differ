@@ -1,6 +1,6 @@
 SHORT DESCRIPTION (132 characters max — update manifest.json "description" field to match before publishing):
 
-Select text on any page and compare it in Differ — a linguistic text diff and merge tool.
+Compare text from any web page, or a Google Doc's suggestions, in Differ — a text diff and merge tool.
 
 
 FULL DESCRIPTION (Chrome Web Store listing):
@@ -15,10 +15,15 @@ HOW TO USE
 
 You can also click the extension icon to open a popup where you can view, edit, or paste texts directly, then click "Open in Differ".
 
+GOOGLE DOCS SUGGESTIONS
+
+When you're viewing a Google Doc, the popup offers a "Compare suggestions in Differ" button. One click downloads the doc, extracts every open suggested edit, and opens Differ with two versions side by side: the original, and the document as it would read with all suggestions accepted. The document is processed entirely in your browser — nothing is uploaded anywhere. Access to docs.google.com is an optional permission, requested only the first time you use this button.
+
 FEATURES
 
 - Works across tabs: capture text from one page, then another, and compare them instantly
 - Context menu integration: right-click any selected text to set it as Original or Modified
+- Google Docs integration: turn a doc's open suggestions into an original-vs-accepted comparison in one click
 - Popup with editable text fields: paste or edit texts directly without visiting a web page first
 - Per-field clear buttons for quick resets
 - Auto-opens Differ when both texts are captured — no extra clicks needed

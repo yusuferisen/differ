@@ -122,11 +122,14 @@ A Manifest V3 Chrome extension that lets you compare text from any web page with
 
 **Popup:** Click the extension icon to see and edit captured texts, paste directly, or click **Open in Differ** at any time — even with empty fields.
 
+**Google Docs suggestions:** When you're viewing a Google Doc, the popup shows a **Compare suggestions in Differ** button. It downloads the doc as `.docx` (which embeds open suggestions as Word tracked changes), parses it locally, and opens Differ with the **original** vs. the document **with all suggestions accepted**. Access to `docs.google.com` is an optional permission, requested only the first time you use it; the document is processed entirely in the browser and never uploaded anywhere.
+
 **Technical details:**
 - Texts persist in `chrome.storage.local` across tabs and browser restarts
 - Full selection text is retrieved via the scripting API (avoids `selectionText` truncation)
 - Content script injection fills the web app's textareas without modifying `index.html`
 - Popup delegates tab creation to the background service worker to survive popup close
+- Google Docs comparison parses the `.docx` export client-side (`extension/docx.js`: a tiny hand-rolled ZIP reader using `DecompressionStream` + an OOXML tracked-changes walker) — no Google API, no OAuth
 
 To install locally: load `extension/` as an unpacked extension at `chrome://extensions` (enable Developer mode). For publishing to the Chrome Web Store, see [extension/PUBLISHING.md](extension/PUBLISHING.md).
 
@@ -257,6 +260,7 @@ differ/
 │   ├── manifest.json       # extension manifest
 │   ├── background.js       # service worker (context menus, tab orchestration)
 │   ├── content.js          # injected into differ to fill textareas
+│   ├── docx.js             # client-side .docx reader (ZIP + OOXML tracked changes) for Google Docs suggestions
 │   ├── popup.html/css/js   # extension popup UI
 │   ├── icons/              # extension icons (16, 48, 128px)
 │   ├── store/              # Chrome Web Store listing assets
