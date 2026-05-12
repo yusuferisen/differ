@@ -38,6 +38,30 @@
 
 ## Themes
 - [x] Theme picker: auto/light/dark + named themes (nord, solarized dark, dracula, github) via dropdown button
+- [x] Editorial "paper" themes (`paper` light + `paper-dark`) — serif reading face (Charter), sans UI chrome, warm paper backgrounds, softer red/green. `paper` is the default for new visitors; existing users keep their saved theme; the code/monospace themes are untouched. Theme tokens extended with `--font-body`/`--font-ui`/`--logo`/`--radius`/`--on-accent`/`--text-dim-strong`, backfilled for the legacy themes.
+
+## Editorial redesign (general-audience UX)
+Origin: a Claude Design session produced "Direction A" (side-by-side, softened) and "Direction B" (one change at a time) mockups. Plan file: `~/.claude/plans/i-worked-on-a-delightful-lovelace.md` (has the full Phase 2 spec, file:line pointers, decisions, and deviations). Bundle reference files are described in the plan.
+
+**Phase 1 — done**
+- [x] Editorial `paper` / `paper-dark` themes + token system (see Themes above)
+- [x] Editorial empty state: hero ("See what changed. / Pick what stays."), 3 example cards (resume / AI rewrite / proofread), "How Differ works" 3-step; rendered into `#diff-output` when empty; toolbar + final-version panel hidden until there's a real diff; `#diff-output.is-home { overflow: visible }` so the page scrolls naturally
+- [x] Side-by-side restyle ("Direction A"): paper styling throughout the review screen; column headers relabeled "Original"/"Suggested" with italic subtitles; **Keep all / Accept all** pills in the column headers (toggle + active-state highlight; one `batchAll` undo step); toolbar turned into a review strip with an `N of M changes reviewed` progress bar (`reviewProgress()` / `updateProgressBar()`) + a filled `copy result` pill (moved out of the merge-panel header) + ghost-pill share / clear / show-all; final-version panel header gets a subtitle ("your final version" + hint); friendlier merge-hint copy; mobile rules for all the new chrome
+- [x] Kept the existing dev themes byte-for-byte (backfill loop); `--on-accent` token so a near-white `--accent` (paper-dark) gets dark text
+
+**Phase 2 — designed, not built** (see plan file for the detailed spec)
+- [ ] `enumerateChunks(rows)` helper — ordered actionable chunks `{segIdx, chunkIdx, kind: 'replace'|'insert'|'delete', before, after}`, derived from `currentRows` with the same chunk-index walk used by `renderHighlightedDiff`/`computeMergedParts`. (Note: Phase 1 added `reviewProgress()` which already walks the rows similarly — Phase 2 can share/extract that walk.)
+- [ ] `chunkContext(rows, segIdx, chunkIdx)` — `{before, after}` ≈140-char surrounding-text snippets trimmed at sentence boundaries; port of `contextFor()` from the bundle's `directionB.jsx`
+- [ ] "One at a time" wizard view (Direction B): stepper dots colored by decision, a stage card showing the change in dim context (`…before` + struck old `→` new + `after…`) with `{Add|Remove|Change} — change N of M` microcopy, three choice cards **Keep / Use new / Write my own** (the last reuses the existing edit-bar persistence `{custom, side}`), Previous / Skip nav, a running final-version preview pinned at the bottom, and a done screen; writes to the same `mergeState[segIdx][chunkIdx]` via `applyMergeDecision`; 0-changes case shows an "identical / nothing to review" state instead of an empty wizard
+- [ ] View switcher in the review header: **Side by side ⇄ One at a time**, persisted as `localStorage` `differ-view` (default `"side"`); switching re-renders the post-diff area from the same `currentRows` + `mergeState` (lossless either way; no need to put it in the share-link hash)
+- [ ] Per-section "Review" affordance in Side-by-side: a small button on each changed row that switches to the wizard starting at that section's first chunk; closing/finishing returns to Side-by-side
+- Default review mode stays **Side by side** for new visitors (decided with the user); a literal "Start over" entry point + the full home/review state separation (inputs hidden once you're reviewing, as in the bundle's `app.jsx`) are deferred to Phase 2 along with the wizard
+- Not doing: "Direction C" (unified inline / Track-Changes popovers — user disliked it); any change to segmentation / smart matching / jsdiff usage / the `mergeState` model
+
+**Wrap-up (do at commit/ship time)**
+- [ ] Bump the cache version string in `sw.js` (index.html changed substantially — stale caches would serve the old UI)
+- [ ] Optional: an analytics event for view switch / guided-flow completion (reuse the `analytics.js` wrapper). Phase 1 already tracks `accept_all` with `scope: 'all'` for the global pills.
+- [x] README updated for the Phase 1 redesign
 
 ## Pre-launch
 - [x] Sample/placeholder text: dropdown with multiple sample scenarios gated behind ?samples query param; generic sample always available via "try a sample" button

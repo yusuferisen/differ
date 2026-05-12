@@ -22,36 +22,26 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* FOUC fallback — source of truth is the THEMES object in JS */
+    /* FOUC fallback — source of truth is the THEMES object in JS (default: "paper") */
     :root {
-      --bg: #21252b; --bg-panel: #282c34; --bg-input: #1e2227; --bg-merge: #1a1d23;
-      --border: #3e4451; --text: #abb2bf; --text-bright: #e6e6e6;
-      --text-dim: #4b5263; --text-mute: #3e4451; --accent: #61afef;
-      --color-old: #e06c75; --color-new: #7ec699;
-      --bg-old: rgba(59,32,32,0.55); --bg-new: rgba(26,46,26,0.55);
-      --hl-old: rgba(224,108,117,0.38); --hl-new: rgba(126,198,153,0.38);
-      --amber: #e5c07b; --amber-bg: rgba(229,192,123,0.18); --amber-border: rgba(229,192,123,0.25);
-      --purple: #c678dd; --purple-bg: #c678dd22;
-      --settled-bg: rgba(100,100,100,0.15); --rejected-bg: rgba(100,100,100,0.08);
-    }
-    @media (prefers-color-scheme: light) {
-      :root {
-        --bg: #fafafa; --bg-panel: #f0f2f5; --bg-input: #ffffff; --bg-merge: #f5f5f5;
-        --border: #d0d4db; --text: #383a42; --text-bright: #1a1a1a;
-        --text-dim: #9a9fa9; --text-mute: #c0c4ce; --accent: #4078f2;
-        --color-old: #ca1243; --color-new: #50a14f;
-        --bg-old: rgba(202,18,67,0.07); --bg-new: rgba(80,161,79,0.07);
-        --hl-old: rgba(202,18,67,0.15); --hl-new: rgba(80,161,79,0.15);
-        --amber: #986801; --amber-bg: rgba(152,104,1,0.1); --amber-border: rgba(152,104,1,0.25);
-        --purple: #a626a4; --purple-bg: rgba(166,38,164,0.08);
-        --settled-bg: rgba(0,0,0,0.06); --rejected-bg: rgba(0,0,0,0.03);
-      }
+      --bg: #f8f5ef; --bg-panel: #ffffff; --bg-input: #ffffff; --bg-merge: #fdfbf6;
+      --border: #e8e2d4; --text: #54514a; --text-bright: #1c1a15;
+      --text-dim: #8f8b80; --text-dim-strong: #6b6760; --text-mute: #b3aea1; --accent: #1c1a15; --on-accent: #f8f5ef;
+      --color-old: #b55a40; --color-new: #2e7a54;
+      --bg-old: rgba(181,90,64,0.06); --bg-new: rgba(46,122,84,0.06);
+      --hl-old: #fceee8; --hl-new: #e3f0e9;
+      --amber: #b07d1e; --amber-bg: rgba(176,125,30,0.12); --amber-border: rgba(176,125,30,0.3);
+      --purple: #8d5fb0; --purple-bg: rgba(141,95,176,0.1);
+      --settled-bg: rgba(28,26,21,0.05); --rejected-bg: rgba(28,26,21,0.03);
+      --font-body: Charter, 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+      --font-ui: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      --radius: 10px;
     }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Menlo', monospace;
+      font-family: var(--font-ui);
       font-size: 13px;
       line-height: 1.6;
       min-height: 100vh;
@@ -71,10 +61,11 @@
     }
 
     h1 {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--color-new);
-      letter-spacing: 0.08em;
+      font-family: var(--font-body);
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--logo);
+      letter-spacing: 0.02em;
     }
 
     .hint {
@@ -111,7 +102,7 @@
     .mode-btn.active {
       background: var(--accent);
       border-color: var(--accent);
-      color: #fff;
+      color: var(--on-accent, #fff);
     }
 
     .mode-btn:hover:not(.active) {
@@ -212,8 +203,8 @@
       color: var(--text-bright);
       border: none;
       padding: 10px 12px;
-      font-family: inherit;
-      font-size: 13px;
+      font-family: var(--font-body);
+      font-size: 14px;
       line-height: 1.6;
       resize: none;
       outline: none;
@@ -240,6 +231,7 @@
     .toolbar-actions {
       margin-left: auto;
       display: flex;
+      align-items: center;
       gap: 10px;
     }
 
@@ -310,7 +302,10 @@
 
     .diff-cell {
       flex: 1;
-      padding: 7px 12px;
+      padding: 8px 14px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.7;
       white-space: pre-wrap;
       word-break: break-word;
     }
@@ -346,8 +341,9 @@
       align-items: center;
       justify-content: center;
       flex: 1;
-      color: var(--text-mute);
-      font-size: 12px;
+      color: var(--text-dim);
+      font-family: var(--font-body);
+      font-size: 15px;
       gap: 6px;
       text-align: center;
       padding: 24px;
@@ -450,8 +446,9 @@
     .row-accept-right { left: 50%; transform: translateY(-50%) translateX(2px); }
 
     .merge-hint {
-      padding: 7px 12px;
-      font-size: 11px;
+      padding: 9px 12px;
+      font-family: var(--font-ui);
+      font-size: 12.5px;
       color: var(--text-dim);
       text-align: center;
       border-bottom: 1px solid var(--border);
@@ -526,26 +523,13 @@
 
     .merge-undo-btn:hover { border-color: var(--text); }
 
-    .merge-copy-btn {
-      background: var(--accent);
-      color: #fff;
-      border: 1px solid var(--accent);
-      padding: 3px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 12px;
-      transition: opacity 0.12s;
-    }
-
-    .merge-copy-btn:hover { opacity: 0.85; }
-
     #merge-text {
       flex: 1;
       overflow-y: auto;
-      padding: 10px 12px;
-      font-size: 13px;
-      line-height: 1.7;
+      padding: 12px 14px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.75;
       white-space: pre-wrap;
       word-break: break-word;
       background: var(--bg-merge);
@@ -809,8 +793,152 @@
       justify-content: center;
       flex: 1;
       color: var(--color-new);
-      font-size: 12px;
+      font-size: 14px;
       gap: 6px;
+      font-family: var(--font-body);
+    }
+
+    /* ── Brand mark ── */
+    .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+    .brand-dot {
+      width: 11px; height: 11px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-old) 0 50%, var(--color-new) 50% 100%);
+      flex-shrink: 0;
+    }
+
+    /* ── Editorial empty state (rendered inside #diff-output when empty) ── */
+    .home {
+      flex: 1;
+      overflow-y: auto;
+      padding: 40px 32px 64px;
+      font-family: var(--font-ui);
+    }
+    .home-inner { max-width: 880px; margin: 0 auto; }
+    .home-kicker {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-dim-strong, var(--text-dim)); margin-bottom: 16px;
+    }
+    .home-h1 {
+      font-family: var(--font-body);
+      font-size: clamp(34px, 5.5vw, 56px); line-height: 1.05; letter-spacing: -0.02em;
+      font-weight: 500; color: var(--text-bright); margin-bottom: 18px;
+    }
+    .home-h1-alt { color: var(--text-dim); font-style: italic; }
+    .home-lede {
+      font-family: var(--font-body);
+      font-size: 18px; line-height: 1.55; color: var(--text); max-width: 560px; margin-bottom: 24px;
+    }
+    .home-go {
+      background: var(--accent); color: var(--bg-panel); border: none;
+      padding: 13px 24px; border-radius: 999px; font-family: var(--font-ui);
+      font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 0.01em;
+      transition: transform .12s, opacity .12s;
+    }
+    .home-go:hover { transform: translateY(-1px); opacity: 0.92; }
+
+    .home-samples {
+      margin-top: 40px;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    }
+    .home-sample {
+      text-align: left; background: var(--bg-panel); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 18px; cursor: pointer;
+      font-family: var(--font-ui); color: var(--text); transition: transform .12s, border-color .12s;
+    }
+    .home-sample:hover { border-color: var(--text-dim); transform: translateY(-2px); }
+    .home-sample-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-dim-strong, var(--text-dim)); margin-bottom: 8px;
+    }
+    .home-sample-blurb {
+      font-family: var(--font-body); font-size: 15px; line-height: 1.4; color: var(--text-bright);
+      margin-bottom: 12px;
+    }
+    .home-sample-go { font-size: 12px; color: var(--text-dim); }
+
+    .home-how {
+      margin-top: 56px; padding-top: 32px; border-top: 1px solid var(--border);
+    }
+    .home-how-title {
+      font-family: var(--font-body); font-size: 22px; letter-spacing: -0.01em;
+      color: var(--text-bright); margin-bottom: 24px;
+    }
+    .home-how-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+    .home-how-num {
+      font-family: var(--font-body); font-size: 36px; color: var(--text-dim);
+      letter-spacing: -0.02em; margin-bottom: 8px; line-height: 1;
+    }
+    .home-how-step-title {
+      font-size: 14px; font-weight: 600; color: var(--text-bright); margin-bottom: 8px;
+    }
+    .home-how-step-body {
+      font-family: var(--font-body); font-size: 14px; line-height: 1.55; color: var(--text);
+    }
+    @media (max-width: 640px) {
+      .home { padding: 28px 18px 48px; }
+      .home-samples, .home-how-steps { grid-template-columns: 1fr; }
+    }
+    /* When the editorial home is showing, let the page grow/scroll naturally
+       instead of trapping the hero in the diff area's scroll box. */
+    #diff-output.is-home { overflow: visible; }
+
+    /* ── Editorial review chrome (Direction A) ── */
+    .btn-pill {
+      background: var(--accent); color: var(--on-accent, #fff);
+      border: 1px solid var(--accent); border-radius: 999px;
+      padding: 5px 14px; cursor: pointer; font-family: var(--font-ui);
+      font-size: 12px; font-weight: 500; letter-spacing: 0.01em;
+      transition: opacity 0.12s, transform 0.12s;
+    }
+    .btn-pill:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-pill:disabled { opacity: 0.45; cursor: default; transform: none; }
+    .btn-ghost {
+      background: transparent; color: var(--text-dim-strong, var(--text-dim));
+      border: 1px solid var(--border); border-radius: 999px;
+      padding: 5px 12px; cursor: pointer; font-family: var(--font-ui);
+      font-size: 12px; transition: border-color 0.12s, color 0.12s;
+    }
+    .btn-ghost:hover { border-color: var(--text-dim-strong, var(--text-dim)); color: var(--text-bright); }
+
+    .review-progress {
+      display: flex; align-items: center; gap: 7px; margin-right: 6px;
+      font-family: var(--font-ui); font-size: 12px; color: var(--text-dim-strong, var(--text-dim));
+      white-space: nowrap;
+    }
+    .rp-done { font-weight: 600; color: var(--text-bright); }
+    .rp-sep  { color: var(--text-dim); }
+    .rp-total { font-weight: 500; color: var(--text-bright); }
+    .review-bar {
+      width: 96px; height: 4px; border-radius: 999px; background: var(--border);
+      overflow: hidden; flex-shrink: 0;
+    }
+    .review-bar-fill { display: block; height: 100%; background: var(--accent); transition: width 0.25s; }
+    .review-progress.complete .review-bar-fill { background: var(--color-new); }
+    .review-progress.complete .rp-done { color: var(--color-new); }
+
+    /* Column header: label + subtitle + a "take this whole side" pill */
+    .diff-col-header-cell {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .dch-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+    .dch-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; }
+    .dch-sub {
+      font-family: var(--font-ui); font-size: 11px; font-style: italic; color: var(--text-dim);
+      text-transform: none; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .dch-allbtn {
+      flex-shrink: 0; background: transparent; border: 1px solid var(--border);
+      color: var(--text-dim-strong, var(--text-dim)); border-radius: 999px;
+      padding: 3px 10px; font-family: var(--font-ui); font-size: 11px; cursor: pointer;
+      text-transform: none; letter-spacing: 0;
+      transition: border-color 0.12s, color 0.12s;
+    }
+    .dch-allbtn:hover { border-color: var(--text-dim-strong, var(--text-dim)); color: var(--text-bright); }
+    .dch-allbtn.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent, #fff); }
+
+    /* Final-version panel header gets a subtitle */
+    .merge-panel-sub {
+      font-family: var(--font-ui); font-size: 11px; font-style: italic; color: var(--text-dim);
     }
 
     /* ── Responsive: touch devices ── */
@@ -837,7 +965,8 @@
       .diff-cell { padding: 7px 8px; }
       .diff-col-header-cell { padding: 5px 8px; }
       .row-accept-left, .row-accept-right { padding: 3px 8px; font-size: 12px; }
-      .toolbar .fuzzy-btn, .toolbar .share-btn { min-height: 36px; }
+      .toolbar .fuzzy-btn, .toolbar .share-btn, .toolbar .btn-ghost, .toolbar .btn-pill { min-height: 36px; }
+      .dch-allbtn { min-height: 30px; }
     }
 
     /* ── Responsive: phone (≤480px) ── */
@@ -877,11 +1006,17 @@
       /* Toolbar — wrapping */
       .toolbar { flex-wrap: wrap; gap: 6px; padding: 8px 10px; }
       .stats { width: 100%; font-size: 12px; }
-      .toolbar .fuzzy-btn, .toolbar .share-btn {
+      .toolbar-actions { flex-wrap: wrap; gap: 6px; width: 100%; }
+      .toolbar .fuzzy-btn, .toolbar .share-btn,
+      .toolbar .btn-ghost, .toolbar .btn-pill {
         min-height: 44px;
-        padding: 6px 12px;
-        font-size: 12px;
+        padding: 8px 14px;
+        font-size: 13px;
       }
+      .review-progress { width: 100%; margin: 0 0 2px; font-size: 13px; }
+      .rp-label { display: none; }
+      .review-bar { width: auto; flex: 1; }
+      .merge-panel-sub { display: none; }
 
       /* Diff — stacked rows */
       .diff-col-header { display: none; }
@@ -929,7 +1064,7 @@
       /* Merge panel */
       #merge-panel { min-height: 280px; }
       .merge-panel-header { padding: 8px 10px; gap: 6px; flex-wrap: wrap; }
-      .merge-undo-btn, .merge-copy-btn { min-height: 44px; padding: 6px 12px; font-size: 13px; }
+      .merge-undo-btn { min-height: 44px; padding: 6px 12px; font-size: 13px; }
       #merge-text { font-size: 14px; padding: 10px; }
       .mcb-left, .mcb-right { padding: 8px 12px; font-size: 13px; min-height: 44px; }
       .merge-dismiss { width: 22px; height: 22px; font-size: 12px; }
@@ -952,7 +1087,7 @@
 <body>
 
 <header>
-  <h1>differ</h1>
+  <div class="brand"><span class="brand-dot"></span><h1>differ</h1></div>
   <span class="tagline">review changes in any text</span>
   <span class="hint" id="hint">alt+M: switch mode</span>
   <div class="mode-group" id="mode-group">
@@ -982,12 +1117,14 @@
   <div class="theme-picker" id="theme-picker">
     <button class="fuzzy-btn" id="theme-btn">theme ▾</button>
     <div class="theme-dropdown" id="theme-dropdown" hidden>
-      <div class="theme-section-label">appearance</div>
+      <div class="theme-section-label">reading</div>
+      <button class="theme-option" data-theme="paper">paper</button>
+      <button class="theme-option" data-theme="paper-dark">paper dark</button>
+      <div class="theme-divider"></div>
+      <div class="theme-section-label">code · monospace</div>
       <button class="theme-option" data-theme="auto">auto</button>
       <button class="theme-option" data-theme="light">light</button>
       <button class="theme-option" data-theme="dark">dark</button>
-      <div class="theme-divider"></div>
-      <div class="theme-section-label">themes</div>
       <button class="theme-option" data-theme="nord">nord</button>
       <button class="theme-option" data-theme="solarized-dark">solarized dark</button>
       <button class="theme-option" data-theme="dracula">dracula</button>
@@ -1009,10 +1146,16 @@
 
 <div class="toolbar">
   <span class="stats" id="stats"></span>
-  <button class="fuzzy-btn" id="toggle-equal-btn" style="display:none">show all</button>
   <div class="toolbar-actions">
-    <button class="share-btn" id="share-btn" style="display:none">share link</button>
-    <button class="share-btn" id="clear-btn" style="display:none">clear</button>
+    <div class="review-progress" id="review-progress" style="display:none">
+      <span class="rp-done" id="rp-done">0</span><span class="rp-sep">of</span><span class="rp-total" id="rp-total">0</span>
+      <span class="rp-label">changes reviewed</span>
+      <span class="review-bar"><span class="review-bar-fill" id="review-bar-fill"></span></span>
+    </div>
+    <button class="btn-ghost" id="toggle-equal-btn" style="display:none">show all</button>
+    <button class="btn-ghost share-btn" id="share-btn" style="display:none">share link</button>
+    <button class="btn-pill" id="copy-btn" style="display:none">copy result</button>
+    <button class="btn-ghost" id="clear-btn" style="display:none">clear</button>
   </div>
 </div>
 
@@ -1027,10 +1170,10 @@
 <div id="merge-panel">
   <div class="merge-resize-handle" id="merge-resize-handle"></div>
   <div class="merge-panel-header">
-    <span class="merge-panel-title">final version</span>
+    <span class="merge-panel-title">your final version</span>
+    <span class="merge-panel-sub">updates live as you pick · click any word to rewrite it</span>
     <span class="merge-unresolved-badge" id="unresolved-badge"></span>
     <button class="merge-undo-btn" id="undo-btn" style="display:none">↩ undo</button>
-    <button class="merge-copy-btn" id="copy-btn" style="display:none">copy</button>
   </div>
   <div class="merge-edit-bar" id="merge-edit-bar" style="display:none">
     <textarea class="merge-edit-input" id="merge-edit-input" rows="1" placeholder="type your version…"></textarea>
@@ -1668,6 +1811,7 @@ function renderDiff(rows) {
   const output = document.getElementById('diff-output');
   const stats  = document.getElementById('stats');
   output.innerHTML = '';
+  output.classList.remove('is-home');
 
   if (rows.length === 0) {
     output.innerHTML = '<div class="placeholder">No sections found — try a different mode.</div>';
@@ -1688,18 +1832,24 @@ function renderDiff(rows) {
   stats.textContent =
     `${rows.length} sections · ${changedCount} changed · ${rows.length - changedCount} unchanged`;
 
-  // Sticky column headers
+  // Sticky column headers — label + subtitle + a "take this whole side" pill
   const colHeader = document.createElement('div');
   colHeader.className = 'diff-col-header';
   colHeader.innerHTML =
-    '<div class="diff-col-header-cell left">Original</div>' +
-    '<div class="diff-col-header-cell right">Modified</div>';
+    '<div class="diff-col-header-cell left">' +
+      '<span class="dch-text"><span class="dch-label">Original</span><span class="dch-sub">what you had before</span></span>' +
+      '<button class="dch-allbtn" data-allside="left" title="Keep the original everywhere">Keep all</button>' +
+    '</div>' +
+    '<div class="diff-col-header-cell right">' +
+      '<span class="dch-text"><span class="dch-label">Suggested</span><span class="dch-sub">the new version you’re reviewing</span></span>' +
+      '<button class="dch-allbtn" data-allside="right" title="Accept every suggested change">Accept all</button>' +
+    '</div>';
   output.appendChild(colHeader);
 
   const hint = document.createElement('div');
   hint.className = 'merge-hint';
   hint.id = 'merge-hint';
-  hint.textContent = 'click any highlighted word to choose that version · use « » for an entire row · use + to write your own';
+  hint.textContent = 'Tap a highlighted word on either side to keep that version. Use « » to take a whole row, or + to write your own.';
   output.appendChild(hint);
 
   for (const row of rows) {
@@ -1764,6 +1914,8 @@ function clearMergePanel() {
   document.getElementById('undo-btn').style.display = 'none';
   document.getElementById('copy-btn').style.display = 'none';
   document.getElementById('share-btn').style.display = 'none';
+  const rp = document.getElementById('review-progress');
+  if (rp) rp.style.display = 'none';
 }
 
 function applyMergeDecision(seg, chunk, side, skipUndo) {
@@ -2035,6 +2187,98 @@ function updateMergePanel() {
     unresolvedCount > 0 ? `${unresolvedCount} to decide` : '';
   document.getElementById('undo-btn').style.display =
     undoStack.length > 0 ? '' : 'none';
+  updateProgressBar();
+  updateColHeaderBtns();
+}
+
+// Highlight "Keep all" / "Accept all" when every non-custom chunk is already that side.
+function updateColHeaderBtns() {
+  const btns = document.querySelectorAll('.dch-allbtn');
+  if (!btns.length) return;
+  const st = { left: { any: false, all: true }, right: { any: false, all: true } };
+  for (const row of currentRows) {
+    if (row.type === 'equal' || row.segIdx === undefined) continue;
+    const n = row.chunkCount || 1, decs = mergeState[row.segIdx] || {};
+    for (let c = 0; c < n; c++) {
+      const cur = decs[c] ?? null;
+      if (cur !== null && typeof cur === 'object') continue; // custom edit — ignore
+      st.left.any = st.right.any = true;
+      if (cur !== 'left')  st.left.all  = false;
+      if (cur !== 'right') st.right.all = false;
+    }
+  }
+  btns.forEach(b => {
+    const s = b.dataset.allside;
+    b.classList.toggle('on', st[s] && st[s].any && st[s].all);
+  });
+}
+
+// "N of M changes reviewed" — a chunk counts as reviewed once it has any decision
+// (left / right / custom edit). Drives the progress pill in the toolbar.
+function reviewProgress() {
+  let total = 0, done = 0;
+  for (const row of currentRows) {
+    if (row.type === 'equal' || row.segIdx === undefined) continue;
+    const n = row.chunkCount || 1;
+    total += n;
+    const decs = mergeState[row.segIdx] || {};
+    for (let c = 0; c < n; c++) if (decs[c] != null) done++;
+  }
+  return { total, done };
+}
+
+function updateProgressBar() {
+  const wrap = document.getElementById('review-progress');
+  if (!wrap) return;
+  const { total, done } = reviewProgress();
+  if (!total) { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+  document.getElementById('rp-done').textContent = done;
+  document.getElementById('rp-total').textContent = total;
+  document.getElementById('review-bar-fill').style.width = Math.round((done / total) * 100) + '%';
+  wrap.classList.toggle('complete', done === total);
+}
+
+// "Keep all" / "Accept all" — apply one side to every changed chunk (custom edits
+// are left untouched). Clicking again when everything is already that side toggles
+// it back to undecided. Recorded as a single undo step.
+function acceptAllRows(side) {
+  // Decide direction: toggle off if every non-custom chunk already matches `side`.
+  let anyNonCustom = false, allMatch = true;
+  for (const row of currentRows) {
+    if (row.type === 'equal' || row.segIdx === undefined) continue;
+    const n = row.chunkCount || 1, decs = mergeState[row.segIdx] || {};
+    for (let c = 0; c < n; c++) {
+      const cur = decs[c] ?? null;
+      if (cur !== null && typeof cur === 'object') continue;
+      anyNonCustom = true;
+      if (cur !== side) allMatch = false;
+    }
+  }
+  if (!anyNonCustom) return;
+  const target = allMatch ? null : side;
+  const batchChunks = [];
+  for (const row of currentRows) {
+    if (row.type === 'equal' || row.segIdx === undefined) continue;
+    const seg = row.segIdx, n = row.chunkCount || 1;
+    if (!mergeState[seg]) mergeState[seg] = {};
+    for (let c = 0; c < n; c++) {
+      const cur = mergeState[seg][c] ?? null;
+      if (cur !== null && typeof cur === 'object') continue; // keep custom edits
+      if (cur === target) continue;
+      batchChunks.push({ seg, chunkIdx: c, prev: cur });
+      mergeState[seg][c] = target;
+      updateSpansForChunk(seg, c);
+    }
+  }
+  if (!batchChunks.length) return;
+  if (target !== null) analytics.track('accept_all', { side, scope: 'all' });
+  undoStack.push({ batchAll: true, chunks: batchChunks });
+  if (undoStack.length > 20) undoStack.shift();
+  mergeActive = true;
+  hideMergeHint();
+  updateMergePanel();
+  updateHash();
 }
 
 // Click: highlighted spans in diff table → merge decision
@@ -2048,6 +2292,10 @@ document.getElementById('diff-output').addEventListener('click', e => {
 
   // Close stale edit bar if open
   if (editBarState) closeEditBar();
+
+  // "Keep all" / "Accept all" in the column headers
+  const allBtn = e.target.closest('.dch-allbtn');
+  if (allBtn) { acceptAllRows(allBtn.dataset.allside); return; }
 
   // Accept-all buttons
   const acceptBtn = e.target.closest('.row-accept-left, .row-accept-right');
@@ -2179,7 +2427,13 @@ document.getElementById('merge-edit-input').addEventListener('input', function()
 document.getElementById('undo-btn').addEventListener('click', () => {
   const entry = undoStack.pop();
   if (!entry) return;
-  if (entry.batch) {
+  if (entry.batchAll) {
+    for (const { seg, chunkIdx, prev } of entry.chunks) {
+      if (!mergeState[seg]) mergeState[seg] = {};
+      mergeState[seg][chunkIdx] = prev;
+      updateSpansForChunk(seg, chunkIdx);
+    }
+  } else if (entry.batch) {
     for (const { chunkIdx, prev } of entry.chunks) {
       if (!mergeState[entry.seg]) mergeState[entry.seg] = {};
       mergeState[entry.seg][chunkIdx] = prev;
@@ -2290,6 +2544,63 @@ document.getElementById('copy-btn').addEventListener('click', () => {
 })();
 
 // ---------------------------------------------------------------------------
+// Editorial empty state (rendered into #diff-output when there's nothing to diff)
+// ---------------------------------------------------------------------------
+const HOME_SAMPLES = [
+  { key: 'Resume edit',     label: 'Resume',     blurb: 'A friend tightened up a resume — see what changed and keep the best lines.' },
+  { key: 'LLM rewrite',     label: 'AI rewrite', blurb: 'A paragraph before and after an AI polish. Which version reads better?' },
+  { key: 'Typo corrections',label: 'Proofread',  blurb: 'Catch every fix between a rough draft and its proofread.' },
+];
+
+function emptyStateHTML() {
+  const cards = HOME_SAMPLES.map(s => `
+    <button class="home-sample" data-sample="${s.key}">
+      <div class="home-sample-label">${s.label}</div>
+      <div class="home-sample-blurb">${s.blurb}</div>
+      <div class="home-sample-go">Try this example →</div>
+    </button>`).join('');
+  return `<div class="home"><div class="home-inner">
+    <div class="home-kicker">for writers, students, anyone comparing two drafts</div>
+    <h2 class="home-h1">See what changed.<br><span class="home-h1-alt">Pick what stays.</span></h2>
+    <p class="home-lede">Paste two versions of any text in the boxes above. Differ highlights every difference and lets you choose — word by word — which version to keep. Edit anything that's not quite right, then copy the result.</p>
+    <button class="home-go" id="try-sample-btn">Try a sample to see how it works →</button>
+    <div class="home-samples">${cards}</div>
+    <div class="home-how">
+      <div class="home-how-title">How Differ works</div>
+      <div class="home-how-steps">
+        <div><div class="home-how-num">01</div><div class="home-how-step-title">Paste two versions</div><div class="home-how-step-body">An email draft and your editor's revision. A resume and a friend's rewrite. A paragraph before and after AI polish. Anything with two versions works.</div></div>
+        <div><div class="home-how-num">02</div><div class="home-how-step-title">See what actually changed</div><div class="home-how-step-body">Differ highlights every difference at the word level — no cryptic markup, no scrolling past unchanged paragraphs looking for what moved.</div></div>
+        <div><div class="home-how-num">03</div><div class="home-how-step-title">Pick, mix, or rewrite</div><div class="home-how-step-body">Keep the version you like, or combine the best of both. Click any change to edit it yourself. Copy the final result when you're done.</div></div>
+      </div>
+    </div>
+  </div></div>`;
+}
+
+function bindEmptyState() {
+  bindTrySampleBtn();
+  document.querySelectorAll('#diff-output .home-sample[data-sample]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      analytics.track('try_sample', { sample: btn.dataset.sample });
+      loadSample(btn.dataset.sample);
+    });
+  });
+}
+
+// Show/hide the "review" chrome (toolbar + final-version panel + copy / progress)
+// depending on whether there's a real comparison on screen.
+function setReviewChrome({ hasText, hasDiff }) {
+  const toolbar = document.querySelector('.toolbar');
+  const panel   = document.getElementById('merge-panel');
+  if (toolbar) toolbar.style.display = hasText ? '' : 'none';
+  if (panel)   panel.style.display   = hasDiff ? '' : 'none';
+  document.getElementById('copy-btn').style.display = hasDiff ? '' : 'none';
+  if (!hasDiff) {
+    const rp = document.getElementById('review-progress');
+    if (rp) rp.style.display = 'none';
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Compare action
 // ---------------------------------------------------------------------------
 function compare() {
@@ -2304,16 +2615,14 @@ function compare() {
   if (!hasText) clearBtn.textContent = 'clear';
 
   if (!oldText.trim() || !newText.trim()) {
-    output.innerHTML = '<div class="placeholder">' +
-      '<span>Paste two versions of any text to review the changes</span>' +
-      '<span class="placeholder-usecases">Edited documents · LLM rewrites · code changes</span>' +
-      '<button class="placeholder-sample" id="try-sample-btn">try a sample</button>' +
-      '</div>';
-    bindTrySampleBtn();
+    output.innerHTML = emptyStateHTML();
+    output.classList.add('is-home');
+    bindEmptyState();
     stats.textContent = '';
     applyHideEqual(0);
     resetMergeState();
     clearMergePanel();
+    setReviewChrome({ hasText, hasDiff: false });
     return;
   }
 
@@ -2324,9 +2633,11 @@ function compare() {
     rows = computeDiff(segs1, segs2, fuzzyEnabled);
   } catch {
     output.innerHTML = '<div class="placeholder">Something went wrong — try refreshing the page.</div>';
+    output.classList.remove('is-home');
     stats.textContent = '';
     resetMergeState();
     clearMergePanel();
+    setReviewChrome({ hasText: true, hasDiff: false });
     return;
   }
   resetMergeState();
@@ -2334,8 +2645,9 @@ function compare() {
   renderDiff(rows);
   trackDiff(currentMode, rows.length, rows.filter(function(r) { return r.type !== 'equal'; }).length);
   updateMergePanel();
-  document.getElementById('copy-btn').style.display = '';
+  const hasChanges = rows.some(function(r) { return r.type !== 'equal'; });
   document.getElementById('share-btn').style.display = '';
+  setReviewChrome({ hasText: true, hasDiff: hasChanges });
 }
 
 function debounce(fn, ms) {
@@ -2508,15 +2820,18 @@ function cancelClearUndo() {
     compare();
     updateHash();
 
-    // Switch to undo mode
+    // Switch to undo mode — keep the toolbar visible so the undo button stays reachable
     clearBtn.textContent = 'undo';
     clearBtn.style.display = '';
+    const tb = document.querySelector('.toolbar');
+    if (tb) tb.style.display = '';
     clearTimeout(clearTimer);
     clearTimer = setTimeout(() => {
       clearBackup = null;
       clearBtn.textContent = 'clear';
       if (!textOld.value.trim() && !textNew.value.trim()) {
         clearBtn.style.display = 'none';
+        if (tb) tb.style.display = 'none';
       }
     }, 8000);
   });
@@ -2596,9 +2911,52 @@ const THEMES = {
     '--purple':'#8250df','--purple-bg':'rgba(130,80,223,0.1)',
     '--settled-bg':'rgba(0,0,0,0.06)','--rejected-bg':'rgba(0,0,0,0.03)',
   },
+  // ── Editorial "Paper" themes — friendly for general-audience writing review ──
+  paper: {
+    '--bg':'#f8f5ef','--bg-panel':'#ffffff','--bg-input':'#ffffff','--bg-merge':'#fdfbf6',
+    '--border':'#e8e2d4','--text':'#54514a','--text-bright':'#1c1a15',
+    '--text-dim':'#8f8b80','--text-dim-strong':'#6b6760','--text-mute':'#b3aea1','--accent':'#1c1a15','--on-accent':'#f8f5ef',
+    '--color-old':'#b55a40','--color-new':'#2e7a54',
+    '--bg-old':'rgba(181,90,64,0.06)','--bg-new':'rgba(46,122,84,0.06)',
+    '--hl-old':'#fceee8','--hl-new':'#e3f0e9',
+    '--amber':'#b07d1e','--amber-bg':'rgba(176,125,30,0.12)','--amber-border':'rgba(176,125,30,0.3)',
+    '--purple':'#8d5fb0','--purple-bg':'rgba(141,95,176,0.1)',
+    '--settled-bg':'rgba(28,26,21,0.05)','--rejected-bg':'rgba(28,26,21,0.03)',
+    '--font-body':"Charter, 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif",
+    '--font-ui':"-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif",
+    '--logo':'#1c1a15','--radius':'10px',
+  },
+  'paper-dark': {
+    '--bg':'#1c1a15','--bg-panel':'#26231c','--bg-input':'#211e18','--bg-merge':'#1a1813',
+    '--border':'#3a352b','--text':'#cdc6b5','--text-bright':'#f4efe2',
+    '--text-dim':'#8f897a','--text-dim-strong':'#a39d8c','--text-mute':'#6f6857','--accent':'#e6dfcd','--on-accent':'#1c1a15',
+    '--color-old':'#d98a6f','--color-new':'#7bbf94',
+    '--bg-old':'rgba(217,138,111,0.12)','--bg-new':'rgba(123,191,148,0.1)',
+    '--hl-old':'rgba(217,138,111,0.22)','--hl-new':'rgba(123,191,148,0.18)',
+    '--amber':'#d6b454','--amber-bg':'rgba(214,180,84,0.14)','--amber-border':'rgba(214,180,84,0.3)',
+    '--purple':'#b89bd6','--purple-bg':'rgba(184,155,214,0.16)',
+    '--settled-bg':'rgba(244,239,226,0.06)','--rejected-bg':'rgba(244,239,226,0.03)',
+    '--font-body':"Charter, 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif",
+    '--font-ui':"-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif",
+    '--logo':'#f4efe2','--radius':'10px',
+  },
 };
 
-let currentTheme = localStorage.getItem('differ-theme') || 'auto';
+// Backfill typography/layout tokens for the "code / monospace" themes so they
+// look exactly as they did before the editorial tokens were introduced.
+const MONO_STACK = "'SF Mono', 'Fira Code', 'Cascadia Code', 'Menlo', monospace";
+for (const t of Object.values(THEMES)) {
+  if (!t['--font-body']) {
+    t['--font-body'] = MONO_STACK;
+    t['--font-ui']   = MONO_STACK;
+    t['--logo']      = t['--color-new'];
+    t['--radius']    = '4px';
+  }
+  if (!t['--text-dim-strong']) t['--text-dim-strong'] = t['--text-dim'];
+  if (!t['--on-accent']) t['--on-accent'] = '#fff';
+}
+
+let currentTheme = localStorage.getItem('differ-theme') || 'paper';
 
 function applyTheme(name) {
   currentTheme = name;
@@ -2653,9 +3011,18 @@ themeDropdown.addEventListener('click', e => {
 // ---------------------------------------------------------------------------
 // "Try a sample" button in empty state
 // ---------------------------------------------------------------------------
+// samples.js loads asynchronously; if a sample is requested before it lands,
+// remember it and replay once flushPendingSample() runs from the script onload.
+let _pendingSample = null;
+function flushPendingSample() {
+  if (_pendingSample && window.DIFFER_SAMPLES) {
+    const k = _pendingSample; _pendingSample = null; loadSample(k);
+  }
+}
 function loadSample(key) {
   const samples = window.DIFFER_SAMPLES;
-  if (!samples || !samples[key]) return;
+  if (!samples) { _pendingSample = key; return; }
+  if (!samples[key]) return;
   cancelClearUndo();
   textOld.value = samples[key].old;
   textNew.value = samples[key].new;
@@ -2879,10 +3246,11 @@ const samplesScript = document.createElement('script');
 samplesScript.src = 'samples.js';
 samplesScript.onload = () => {
   if (SHOW_SAMPLES && window.DIFFER_SAMPLES) initSamplesDropdown(window.DIFFER_SAMPLES);
-  initApp();
+  flushPendingSample();
 };
-samplesScript.onerror = () => { initApp(); };
 document.head.appendChild(samplesScript);
+
+initApp();
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
