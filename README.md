@@ -40,7 +40,9 @@ Controls how text is divided into units before diffing. Toggle with the mode but
 | **paragraph** | Splits on blank lines (`\n\n`) |
 | **sentence** | NLP-aware tokenization via compromise.js — handles abbreviations like Mr., Dr., U.S.A. correctly. Default. |
 | **clause** | Splits within sentences at clause boundaries. Short clauses (<4 words) are merged into their predecessor. |
-| **line** | Splits on single newlines. Blank and whitespace-only lines are dropped. |
+| **line** | Splits on single newlines (one segment per non-blank line). |
+
+Whatever the mode, the original whitespace *between* segments — blank lines, single newlines inside a paragraph, indentation — is kept and re-emitted in the assembled output, so a multi-paragraph document stays multi-paragraph. (In sentence/clause mode the segment text comes from compromise and may have its internal whitespace normalized — and clause-merging joins short clauses with a single space — so a multi-space or newline run *inside* a segment can collapse; the breaks between segments are preserved either way.)
 
 ### Diff options
 
@@ -71,7 +73,7 @@ Activated automatically on the first click of any highlighted word or `«`/`»` 
 
 Always visible at the bottom of the page, sticky while scrolling. The top edge is a drag handle — resize the panel vertically by dragging. Height persists across reloads.
 
-- Live-updating assembled text using mode-appropriate delimiters (spaces between sentences/clauses, blank lines between paragraphs, newlines between lines)
+- Live-updating assembled text that preserves the source's original spacing — paragraph breaks, blank lines, indentation — rather than re-joining segments with a uniform delimiter
 - **Undecided chunks**: `{old|new}` inline (amber) if short ≤80 chars, or a two-line block with `← old` / `→ new` each clickable for long chunks
 - Removed/added sections are included by default; exclude them via the diff table
 - Block-format conflicts can also be resolved directly in the panel

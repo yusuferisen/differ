@@ -1273,44 +1273,122 @@ document.getElementById('toggle-equal-btn').addEventListener('click', () => {
 // ---------------------------------------------------------------------------
 // Text splitting
 // ---------------------------------------------------------------------------
+// splitText returns an array of { text, pre } segments. `pre` is the exact
+// whitespace that precedes `text` in the source — the first segment's `pre`
+// is the document's leading whitespace. Concatenating `pre + text` over every
+// segment reproduces the original string (any whitespace trailing the last
+// segment is the only thing dropped). Keeping the inter-segment whitespace
+// here is what lets the merged output preserve paragraph breaks, indentation
+// and blank lines instead of collapsing everything to one paragraph.
+//
+// Caveat: in sentence/clause mode the segment text comes from compromise and
+// may have its internal whitespace normalised (and clause-merging joins short
+// clauses with a single space), so a multi-space or newline run *inside* a
+// segment can collapse. Paragraph boundaries between segments are still
+// preserved because they live in `pre`.
 function splitText(text, mode) {
   if (!text.trim()) return [];
 
-  switch (mode) {
-    case 'sentence':
-      try {
-        const sentences = nlp(text).sentences().out('array').filter(s => s.trim());
-        return sentences.length > 0 ? sentences : [text.trim()];
-      } catch {
-        // fallback: punctuation-based split
-        return text.split(/(?<=[.!?])\s+/).filter(s => s.trim());
+  // Re-attach the original whitespace gaps to a list of content pieces by
+  // scanning `text` for each piece in order. If a piece can't be found
+  // verbatim (the NLP layer normalised it), re-locate it with a whitespace-
+  // flexible match so the gap boundaries stay correct; only if that also
+  // fails do we fall back to a single space.
+  function withGaps(pieces) {
+    const segs = [];
+    let idx = 0;
+    for (const piece of pieces) {
+      if (!piece) continue;
+      let at = text.indexOf(piece, idx);
+      let consumed = piece.length;
+      if (at === -1) {
+        const re = new RegExp(piece.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'));
+        const m = re.exec(text.slice(idx));
+        if (m) { at = idx + m.index; consumed = m[0].length; }
       }
-
-    case 'paragraph':
-      return text.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
-
-    case 'clause': {
-      try {
-        const raw = nlp(text).clauses().out('array').filter(s => s.trim());
-        if (raw.length === 0) return [text.trim()];
-        // Merge clauses under 4 words into their predecessor to avoid fragments like "which", "that"
-        const merged = [];
-        for (const clause of raw) {
-          const wc = (clause.match(/\w+/g) || []).length;
-          if (wc < 4 && merged.length > 0) merged[merged.length - 1] += ' ' + clause;
-          else merged.push(clause);
-        }
-        return merged.filter(Boolean);
-      } catch {
-        return text.split(/(?<=[.!?])\s+/).filter(s => s.trim());
+      if (at === -1) {
+        segs.push({ text: piece, pre: segs.length ? ' ' : '' });
+        idx += piece.length;
+      } else {
+        segs.push({ text: piece, pre: text.slice(idx, at) });
+        idx = at + consumed;
       }
     }
+    return segs;
+  }
 
-    case 'line':
-      return text.split('\n').filter(s => s.trim());
+  switch (mode) {
+    case 'sentence': {
+      let pieces;
+      try {
+        pieces = nlp(text).sentences().out('array').filter(s => s.trim());
+        if (pieces.length === 0) pieces = [text.trim()];
+      } catch {
+        pieces = text.split(/(?<=[.!?])\s+/).filter(s => s.trim());
+      }
+      return withGaps(pieces);
+    }
+
+    case 'clause': {
+      let pieces;
+      try {
+        const raw = nlp(text).clauses().out('array').filter(s => s.trim());
+        if (raw.length === 0) {
+          pieces = [text.trim()];
+        } else {
+          // Merge clauses under 4 words into their predecessor to avoid fragments like "which", "that"
+          const merged = [];
+          for (const clause of raw) {
+            const wc = (clause.match(/\w+/g) || []).length;
+            if (wc < 4 && merged.length > 0) merged[merged.length - 1] += ' ' + clause;
+            else merged.push(clause);
+          }
+          pieces = merged.filter(Boolean);
+        }
+      } catch {
+        pieces = text.split(/(?<=[.!?])\s+/).filter(s => s.trim());
+      }
+      return withGaps(pieces);
+    }
+
+    case 'paragraph': {
+      // Capturing split keeps the blank-line separators; trim leading/trailing
+      // whitespace of each paragraph into `pre` so the diff cell shows clean
+      // text while the gap (including any single newline before/after) is kept.
+      const parts = text.split(/(\n[ \t]*\n[ \t\n]*)/);
+      const segs = [];
+      let pre = '';
+      for (let i = 0; i < parts.length; i++) {
+        if (i % 2 === 1) { pre += parts[i]; continue; }   // separator chunk
+        const chunk = parts[i];
+        if (chunk.trim() === '') { pre += chunk; continue; }
+        const lead  = /^\s*/.exec(chunk)[0];
+        const trail = /\s*$/.exec(chunk)[0];
+        const body  = chunk.slice(lead.length, chunk.length - trail.length);
+        segs.push({ text: body, pre: pre + lead });
+        pre = trail;
+      }
+      return segs;
+    }
+
+    case 'line': {
+      // One segment per non-blank line; blank lines fold into the next line's
+      // `pre` so the diff stays readable while still round-tripping exactly.
+      const lines = text.split('\n');
+      const segs = [];
+      let pre = '';
+      for (let i = 0; i < lines.length; i++) {
+        const sep = i === 0 ? '' : '\n';
+        const ln  = lines[i];
+        if (ln.trim() === '') { pre += sep + ln; continue; }
+        segs.push({ text: ln, pre: pre + sep });
+        pre = '';
+      }
+      return segs;
+    }
 
     default:
-      return [text.trim()];
+      return [{ text: text.trim(), pre: '' }];
   }
 }
 
@@ -1349,7 +1427,8 @@ function segmentSimilarity(a, b) {
   return 0.6 * jaccard + 0.2 * firstWordBonus + 0.2 * lengthSim;
 }
 
-// Given two unmatched blocks, greedily pair by similarity instead of position.
+// Given two unmatched blocks (arrays of { text, pre }), greedily pair by
+// similarity instead of position.
 function fuzzyPairBlocks(removed, added) {
   const rows = [];
   const usedAdded = new Set();
@@ -1359,21 +1438,22 @@ function fuzzyPairBlocks(removed, added) {
     let bestIdx   = -1;
     for (let i = 0; i < added.length; i++) {
       if (usedAdded.has(i)) continue;
-      const score = segmentSimilarity(rem, added[i]);
+      const score = segmentSimilarity(rem.text, added[i].text);
       if (score > bestScore) { bestScore = score; bestIdx = i; }
     }
     if (bestScore >= FUZZY_THRESHOLD && bestIdx >= 0) {
       usedAdded.add(bestIdx);
-      rows.push({ type: 'changed', left: rem, right: added[bestIdx] });
+      rows.push({ type: 'changed', left: rem.text, right: added[bestIdx].text,
+                  leftPre: rem.pre, rightPre: added[bestIdx].pre });
     } else {
-      rows.push({ type: 'removed', left: rem, right: null });
+      rows.push({ type: 'removed', left: rem.text, right: null, leftPre: rem.pre, rightPre: null });
     }
   }
 
   // Remaining unmatched added segments
   for (let i = 0; i < added.length; i++) {
     if (!usedAdded.has(i)) {
-      rows.push({ type: 'added', left: null, right: added[i] });
+      rows.push({ type: 'added', left: null, right: added[i].text, leftPre: null, rightPre: added[i].pre });
     }
   }
 
@@ -1390,10 +1470,10 @@ function norm(s) {
 }
 
 function computeDiff(segs1, segs2, fuzzy = false) {
-  const comparator = (ignoreCase || ignoreWS)
-    ? (a, b) => norm(a) === norm(b)
-    : undefined;
-  const chunks = Diff.diffArrays(segs1, segs2, comparator ? { comparator } : {});
+  // segs are { text, pre }; the diff aligns purely on `text` (the `pre` gaps
+  // ride along so the merged output can rebuild the original spacing).
+  const comparator = (a, b) => norm(a.text) === norm(b.text);
+  const chunks = Diff.diffArrays(segs1, segs2, { comparator });
   const rows = [];
 
   let i = 0;
@@ -1403,7 +1483,7 @@ function computeDiff(segs1, segs2, fuzzy = false) {
 
     if (!chunk.added && !chunk.removed) {
       for (const seg of chunk.value) {
-        rows.push({ type: 'equal', left: seg, right: seg });
+        rows.push({ type: 'equal', left: seg.text, right: seg.text, leftPre: seg.pre, rightPre: seg.pre });
       }
       i++;
     } else if (chunk.removed && next && next.added) {
@@ -1414,22 +1494,26 @@ function computeDiff(segs1, segs2, fuzzy = false) {
       } else {
         const len = Math.max(removed.length, added.length);
         for (let k = 0; k < len; k++) {
+          const r = removed[k] ?? null;
+          const a = added[k]   ?? null;
           rows.push({
-            type:  'changed',
-            left:  removed[k] ?? null,
-            right: added[k]   ?? null,
+            type:     'changed',
+            left:     r ? r.text : null,
+            right:    a ? a.text : null,
+            leftPre:  r ? r.pre  : null,
+            rightPre: a ? a.pre  : null,
           });
         }
       }
       i += 2;
     } else if (chunk.removed) {
       for (const seg of chunk.value) {
-        rows.push({ type: 'removed', left: seg, right: null });
+        rows.push({ type: 'removed', left: seg.text, right: null, leftPre: seg.pre, rightPre: null });
       }
       i++;
     } else {
       for (const seg of chunk.value) {
-        rows.push({ type: 'added', left: null, right: seg });
+        rows.push({ type: 'added', left: null, right: seg.text, leftPre: null, rightPre: seg.pre });
       }
       i++;
     }
@@ -1701,20 +1785,18 @@ function applyMergeDecision(seg, chunk, side, skipUndo) {
   updateHash();
 }
 
-function modeDelimiter() {
-  switch (currentMode) {
-    case 'sentence': return ' ';
-    case 'clause':   return ' ';
-    case 'paragraph': return '\n\n';
-    case 'line':     return '\n';
-    default:         return '\n';
-  }
+// The whitespace that should precede a row's content in the merged output,
+// taken from whichever document the row's segment lives in. This is what
+// restores paragraph breaks / blank lines / indentation in the final text.
+function rowSeparator(row) {
+  return (row.right != null ? row.rightPre : row.leftPre) ?? '';
 }
 
 function computeMergedParts() {
   const tokens = [];
 
   for (const row of currentRows) {
+    tokens.push({ type: 'sep', text: rowSeparator(row) });
     const startLen = tokens.length;
 
     if (row.type === 'equal') {
@@ -1823,15 +1905,9 @@ function computeMergedParts() {
       }
     }
 
-    // Only add separator if this row contributed content
-    if (tokens.length > startLen) {
-      tokens.push({ type: 'sep' });
-    }
-  }
-
-  // Remove trailing separator
-  if (tokens.length > 0 && tokens[tokens.length - 1].type === 'sep') {
-    tokens.pop();
+    // Drop the leading separator we optimistically pushed if the row ended up
+    // contributing nothing (e.g. an addition that was rejected).
+    if (tokens.length === startLen) tokens.pop();
   }
 
   return tokens;
@@ -1870,7 +1946,7 @@ function updateMergePanel() {
         mergeText.appendChild(document.createTextNode(token.text));
       }
     } else if (token.type === 'sep') {
-      mergeText.appendChild(document.createTextNode(modeDelimiter()));
+      mergeText.appendChild(document.createTextNode(token.text));
     } else {
       unresolvedCount++;
       const oldText = token.old ?? '';
@@ -2131,20 +2207,19 @@ document.getElementById('copy-btn').addEventListener('click', () => {
   }
   for (const t of tokens) { if (t.type === 'unresolved') ms.unresolved++; }
   analytics.track('copy_merge', ms);
-  const delim = modeDelimiter();
   let text = '';
   for (const token of tokens) {
-    if (token.type === 'text') {
+    if (token.type === 'text' || token.type === 'sep') {
       text += token.text;
-    } else if (token.type === 'sep') {
-      text += delim;
     } else {
       const o = token.old ?? '';
       const n = token.new ?? '';
       text += o && n ? `{${o}|${n}}` : o ? `{${o}|}` : `{|${n}}`;
     }
   }
-  const clean = delim === ' ' ? text.trimEnd() : text.replace(/\n+$/, '');
+  // Drop leading blank lines and all trailing whitespace; internal paragraph
+  // breaks and indentation (including the first content line's) are preserved.
+  const clean = text.replace(/^(\s*\n)+/, '').replace(/\s+$/, '');
   const btn = document.getElementById('copy-btn');
   const confirm = () => {
     btn.textContent = 'copied!';
