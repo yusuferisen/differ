@@ -257,6 +257,11 @@
 
     .share-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+    /* Comparison too large to fit in a shareable link — the app still works,
+       the link doesn't (the hash is dropped from the URL). */
+    .share-btn.too-long { opacity: 0.5; }
+    .share-btn.too-long:hover { border-color: var(--border); color: var(--text-dim); }
+
     /* ── Diff output ── */
     #diff-output {
       flex: 1;
@@ -2286,6 +2291,13 @@ textNew.addEventListener('input', () => {
 // ---------------------------------------------------------------------------
 // Shareable URL (hash encoding)
 // ---------------------------------------------------------------------------
+// Max length of the "#…" hash we put in the address bar / a share link.
+// The fragment never reaches a server, so the classic ~8 KB URL limit
+// doesn't apply — this is about keeping replaceState cheap and the link
+// pasteable into other apps. ~32 KB of base64 ≈ ~22 KB of text across both
+// sides; document-scale content needs more than a URL can carry.
+const HASH_MAX = 32000;
+
 function encodeForHash() {
   try {
     const state = {
@@ -2322,15 +2334,32 @@ function decodeFromHash() {
   } catch { return null; }
 }
 
+// Reflect "comparison too big for a link" on the share button (dimmed +
+// tooltip) so it's not a surprise only when you click it.
+function markShareOverflow(isOverflow) {
+  const btn = document.getElementById('share-btn');
+  btn.classList.toggle('too-long', isOverflow);
+  btn.title = isOverflow
+    ? 'This comparison is too large to fit in a shareable link — keep this tab open to keep working'
+    : '';
+}
+
 function updateHash() {
   if (!textOld.value && !textNew.value) {
     history.replaceState(null, '', location.pathname + location.search);
+    markShareOverflow(false);
     return;
   }
   const encoded = encodeForHash();
-  if (encoded && ('#' + encoded).length < 8000) {
+  const tooLong = !!encoded && ('#' + encoded).length > HASH_MAX;
+  if (encoded && !tooLong) {
     history.replaceState(null, '', '#' + encoded);
+  } else {
+    // Drop any stale hash so the address bar doesn't misrepresent the
+    // current comparison.
+    history.replaceState(null, '', location.pathname + location.search);
   }
+  markShareOverflow(tooLong);
 }
 const debouncedHashUpdate = debounce(updateHash, 600);
 
@@ -2342,10 +2371,10 @@ document.getElementById('share-btn').addEventListener('click', () => {
   const url = location.origin + location.pathname + (encoded ? '#' + encoded : '');
   const btn = document.getElementById('share-btn');
 
-  if (('#' + encoded).length >= 8000) {
+  if (('#' + encoded).length > HASH_MAX) {
     analytics.track('share_link', { status: 'too_long' });
     const len = Math.round(('#' + encoded).length / 100) * 100;
-    btn.textContent = `too long to share (${len.toLocaleString()} / 8,000 characters)`;
+    btn.textContent = `too long to share (${len.toLocaleString()} / ${HASH_MAX.toLocaleString()} characters)`;
     setTimeout(() => { btn.textContent = 'share link'; }, 3500);
     return;
   }

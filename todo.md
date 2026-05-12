@@ -56,7 +56,8 @@
   - [x] DNS propagation + GitHub Pages DNS check passes
   - [x] Enforce HTTPS enabled in GitHub Pages settings
   - [x] Verify custom domain ownership (TXT record in Namecheap)
-- [x] Shareable URL (base64-encoded hash, "link" button copies URL, ~8KB limit)
+- [x] Shareable URL (base64-encoded hash, "link" button copies URL; `HASH_MAX` = 32 KB — over that, the hash is dropped from the address bar and the share button is dimmed with a tooltip rather than failing silently)
+  - [ ] Compress the payload (`deflate-raw` + base64, with a version marker so old links still decode) to fit ~3× more text per URL — would need an async encode path; the `DecompressionStream` pattern is already in `extension/docx.js`
 
 ## Onboarding & discoverability
 - [x] Tagline ("review changes in any text") below the app name in the header

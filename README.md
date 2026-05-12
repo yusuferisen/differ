@@ -103,7 +103,7 @@ The URL hash updates automatically as you work, encoding the full session:
 - All toggle states (smart matching, character-level, ignore case, ignore spacing)
 - All merge decisions
 
-Click **share link** in the toolbar to copy the current URL. Anyone opening it sees the exact same diff and merge state. If the encoded state exceeds ~8KB the button shows "too long to share" instead.
+Click **share link** in the toolbar to copy the current URL. Anyone opening it sees the exact same diff and merge state. The hash never reaches a server (it's a URL fragment), so the limit is just about keeping the link pasteable elsewhere — encoded state over ~32KB is dropped from the address bar and the share button is dimmed (hover for why) rather than producing a broken link.
 
 ### Stats
 
@@ -198,7 +198,7 @@ Chunk index is computed identically on both sides by walking `row.parts`:
 // Decoded on load → texts set → compare() → mergeState restored
 ```
 
-JSON keys are intentionally short to minimize URL length. Limit: 8KB encoded.
+JSON keys are intentionally short to minimize URL length. Encoded payload is capped at `HASH_MAX` (32KB); over that the hash is omitted from the URL and the share button shows it can't be shared. No compression yet — that's the lever for fitting larger comparisons.
 
 ### Similarity function (fuzzy mode)
 
