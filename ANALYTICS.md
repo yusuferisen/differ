@@ -32,7 +32,7 @@ The dashboard defaults to the Debug view. To see production data, click the **ge
 |---|---|---|
 | `page_view` | `has_hash`, `referrer` | Entry point. `has_hash` indicates arrival via share link. |
 | `diff_performed` | `mode`, `segments`, `changed` | Core value moment — user pasted text and got a diff. Debounced 2s to avoid noise from typing. |
-| `copy_merge` | `left`, `right`, `custom`, `unresolved` | Completion — user copied the merged result. Props summarize merge decisions made. |
+| `copy_merge` | `left`, `right`, `custom`, `unresolved`, `source?` | Completion — user copied the merged result. Props summarize merge decisions made. `source: 'guided'` when copied from the wizard's preview / done screen (no decision breakdown in that path). |
 | `share_link` | `status` (optional: `too_long`) | Distribution — user created a shareable URL. Tracks failures when content exceeds URL length limit. |
 
 **Product funnel:** `page_view` → `diff_performed` → `copy_merge` / `share_link`
@@ -47,6 +47,8 @@ The dashboard defaults to the Debug view. To see production data, click the **ge
 | `try_sample` | — | Onboarding — user clicked "try a sample" to explore the tool. |
 | `clear` | — | User cleared both text areas. |
 | `theme_select` | `theme` | Which theme was chosen. |
+| `view_switch` | `view` (`side` or `guided`) | User flipped between the side-by-side and one-at-a-time review modes. |
+| `guided_complete` | `total`, `reviewed` | User advanced past the last chunk in the wizard. `reviewed` may be less than `total` if some were skipped. |
 
 ## What we intentionally skip
 

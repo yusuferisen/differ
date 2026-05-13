@@ -899,6 +899,8 @@
       font-size: 12px; transition: border-color 0.12s, color 0.12s;
     }
     .btn-ghost:hover { border-color: var(--text-dim-strong, var(--text-dim)); color: var(--text-bright); }
+    .btn-ghost:disabled { opacity: 0.45; cursor: default; }
+    .btn-ghost:disabled:hover { border-color: var(--border); color: var(--text-dim-strong, var(--text-dim)); }
 
     .review-progress {
       display: flex; align-items: center; gap: 7px; margin-right: 6px;
@@ -1082,6 +1084,206 @@
     @media (max-height: 480px) and (orientation: landscape) {
       #merge-panel { height: 140px; }
     }
+
+    /* ── View switcher (Side by side ⇄ One at a time) ── */
+    .view-switch {
+      display: inline-flex; align-items: center; padding: 2px;
+      background: var(--bg-input); border: 1px solid var(--border); border-radius: 999px;
+      font-family: var(--font-ui); margin-right: 4px;
+    }
+    .vs-btn {
+      background: transparent; border: 0; color: var(--text-dim-strong, var(--text-dim));
+      font-family: inherit; font-size: 12px; padding: 5px 12px; border-radius: 999px;
+      cursor: pointer; line-height: 1; white-space: nowrap;
+      transition: background 0.12s, color 0.12s;
+    }
+    .vs-btn:hover { color: var(--text-bright); }
+    .vs-btn.active {
+      background: var(--accent); color: var(--on-accent, #fff); cursor: default;
+    }
+    .vs-btn.active:hover { color: var(--on-accent, #fff); }
+
+    /* Per-section "Review in wizard" affordance on changed rows */
+    .row-review-btn {
+      position: absolute; right: 6px; top: 6px;
+      background: var(--bg-panel); color: var(--text-dim-strong, var(--text-dim));
+      border: 1px solid var(--border); border-radius: 999px;
+      padding: 2px 9px; font-size: 11px; font-family: var(--font-ui);
+      cursor: pointer; opacity: 0; transition: opacity 0.12s, color 0.12s, border-color 0.12s;
+      z-index: 3; line-height: 1.5;
+    }
+    .diff-row:hover .row-review-btn { opacity: 0.8; }
+    .row-review-btn:hover { opacity: 1; color: var(--text-bright); border-color: var(--text-dim-strong, var(--text-dim)); }
+    @media (hover: none) { .row-review-btn { opacity: 0.55; } }
+
+    /* ── Guided wizard ("One at a time") ── */
+    .guided {
+      padding: 32px 28px 140px; max-width: 760px; margin: 0 auto;
+      font-family: var(--font-ui);
+    }
+    .g-stepper {
+      display: flex; align-items: center; gap: 14px; margin-bottom: 26px;
+    }
+    .g-dots {
+      display: flex; flex-wrap: wrap; gap: 4px; flex: 1; min-width: 0;
+    }
+    .g-dot {
+      width: 10px; height: 10px; border-radius: 999px;
+      background: var(--border); border: 0; padding: 0; cursor: pointer;
+      transition: background 0.12s, width 0.18s, transform 0.12s;
+    }
+    .g-dot:hover { transform: scale(1.25); }
+    .g-dot.current { width: 22px; background: var(--accent); }
+    .g-dot.dec-left   { background: var(--color-old); }
+    .g-dot.dec-right  { background: var(--color-new); }
+    .g-dot.dec-custom { background: var(--purple); }
+    .g-dot.current.dec-left,
+    .g-dot.current.dec-right,
+    .g-dot.current.dec-custom { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+    .g-counter {
+      font-size: 12px; color: var(--text-dim-strong, var(--text-dim));
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .g-counter strong { color: var(--text-bright); font-weight: 600; }
+
+    .g-stage {
+      background: var(--bg-panel); border: 1px solid var(--border);
+      border-radius: var(--radius, 10px); padding: 28px 26px; margin-bottom: 22px;
+    }
+    .g-kicker {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--text-dim-strong, var(--text-dim)); margin-bottom: 14px;
+    }
+    .g-kicker strong { color: var(--text-bright); font-weight: 600; }
+    .g-quote {
+      font-family: var(--font-body); font-size: 17px; line-height: 1.65;
+      color: var(--text-bright); margin-bottom: 14px; word-break: break-word;
+    }
+    .g-ctx-before, .g-ctx-after { color: var(--text-dim); }
+    .g-before {
+      color: var(--color-old); text-decoration: line-through;
+      text-decoration-thickness: 1px; padding: 0 1px;
+    }
+    .g-arrow { color: var(--text-dim); margin: 0 6px; }
+    .g-after {
+      color: var(--color-new); background: var(--hl-new);
+      border-radius: 3px; padding: 0 4px;
+    }
+    .g-micro {
+      font-size: 13px; color: var(--text-dim-strong, var(--text-dim)); font-style: italic;
+    }
+
+    .g-choices {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 22px;
+    }
+    .g-choices.two-up { grid-template-columns: repeat(2, 1fr); }
+    .g-choice {
+      display: flex; flex-direction: column; gap: 8px; text-align: left;
+      background: var(--bg-panel); border: 1px solid var(--border);
+      border-radius: var(--radius, 10px); padding: 16px 16px 14px;
+      font-family: var(--font-ui); cursor: pointer; min-height: 110px;
+      transition: border-color 0.12s, transform 0.12s, background 0.12s;
+      color: inherit;
+    }
+    .g-choice:hover { border-color: var(--text-dim-strong, var(--text-dim)); transform: translateY(-1px); }
+    .g-choice.picked { border-color: var(--accent); background: var(--bg-input); }
+    .g-choice-label {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--text-dim-strong, var(--text-dim)); font-weight: 600;
+    }
+    .g-choice.picked .g-choice-label { color: var(--accent); }
+    .g-choice[data-pick="left"]   .g-choice-label { color: var(--color-old); }
+    .g-choice[data-pick="right"]  .g-choice-label { color: var(--color-new); }
+    .g-choice[data-pick="custom"] .g-choice-label { color: var(--purple); }
+    .g-choice-text {
+      font-family: var(--font-body); font-size: 15px; line-height: 1.45;
+      color: var(--text-bright); flex: 1; word-break: break-word;
+    }
+    .g-choice-text.empty { color: var(--text-dim); font-style: italic; }
+    .g-choice-hint { font-size: 11px; color: var(--text-dim); }
+
+    .g-custom-bar {
+      display: flex; gap: 8px; margin-bottom: 22px;
+      background: var(--bg-panel); border: 1px solid var(--purple);
+      border-radius: var(--radius, 10px); padding: 12px;
+    }
+    .g-custom-input {
+      flex: 1; min-height: 60px; resize: vertical;
+      background: var(--bg-input); color: var(--text-bright);
+      border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+      font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+    }
+    .g-custom-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .g-custom-actions { display: flex; flex-direction: column; gap: 6px; }
+
+    .g-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 22px;
+    }
+    .g-nav-spacer { flex: 1; }
+
+    .g-empty, .g-done {
+      text-align: center; padding: 60px 20px; max-width: 560px; margin: 0 auto;
+    }
+    .g-done-icon, .g-empty-icon {
+      width: 56px; height: 56px; border-radius: 999px; margin: 0 auto 18px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--hl-new); color: var(--color-new);
+      font-size: 28px; font-family: var(--font-ui); font-weight: 600;
+    }
+    .g-done-title, .g-empty-title {
+      font-family: var(--font-body); font-size: 24px; color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+    .g-done-sub, .g-empty-sub {
+      font-size: 14px; color: var(--text-dim-strong, var(--text-dim)); margin-bottom: 24px;
+    }
+    .g-done-card {
+      background: var(--bg-panel); border: 1px solid var(--border);
+      border-radius: var(--radius, 10px); padding: 22px;
+      text-align: left; white-space: pre-wrap; word-break: break-word;
+      font-family: var(--font-body); font-size: 15px; line-height: 1.75;
+      color: var(--text-bright); margin-bottom: 20px; max-height: 320px; overflow-y: auto;
+    }
+    .g-done-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+    /* Running final-version preview pinned at the bottom while in guided view */
+    .g-preview {
+      position: sticky; bottom: 0; left: 0; right: 0;
+      background: var(--bg-panel); border-top: 1px solid var(--border);
+      padding: 12px 18px; margin: 0 -28px -140px; /* spans the .guided gutter */
+      display: flex; align-items: center; gap: 14px;
+      font-family: var(--font-ui);
+    }
+    .g-preview-text {
+      flex: 1; min-width: 0; max-height: 48px; overflow: hidden;
+      font-family: var(--font-body); font-size: 13px; line-height: 1.5;
+      color: var(--text-bright); white-space: pre-wrap; word-break: break-word;
+      mask-image: linear-gradient(to bottom, #000 60%, transparent);
+      -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent);
+    }
+    .g-preview-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--text-dim-strong, var(--text-dim)); white-space: nowrap; flex-shrink: 0;
+    }
+    .g-preview-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+    @media (max-width: 640px) {
+      .guided { padding: 22px 16px 160px; }
+      .g-stage { padding: 20px 16px; }
+      .g-quote { font-size: 16px; }
+      .g-choices { grid-template-columns: 1fr; }
+      .g-choices.two-up { grid-template-columns: 1fr; }
+      .g-choice { min-height: auto; padding: 14px; }
+      .g-preview { margin: 0 -16px -160px; padding: 10px 14px; flex-wrap: wrap; }
+      .g-preview-text { width: 100%; order: 2; }
+      .g-preview-label { order: 1; }
+      .g-preview-actions { order: 1; margin-left: auto; }
+    }
+    @media (max-width: 480px) {
+      .view-switch { flex: 1 0 100%; justify-content: center; margin: 0 0 2px; }
+      .vs-btn { flex: 1; padding: 6px 10px; font-size: 12px; min-height: 32px; }
+    }
   </style>
 </head>
 <body>
@@ -1152,6 +1354,10 @@
       <span class="rp-label">changes reviewed</span>
       <span class="review-bar"><span class="review-bar-fill" id="review-bar-fill"></span></span>
     </div>
+    <div class="view-switch" id="view-switch" role="tablist" aria-label="Review mode" style="display:none">
+      <button class="vs-btn active" data-view="side" id="vs-tab-side" role="tab" aria-selected="true" aria-controls="diff-output" title="Compare side by side">side by side</button>
+      <button class="vs-btn" data-view="guided" id="vs-tab-guided" role="tab" aria-selected="false" aria-controls="diff-output" title="Walk through one change at a time">one at a time</button>
+    </div>
     <button class="btn-ghost" id="toggle-equal-btn" style="display:none">show all</button>
     <button class="btn-ghost share-btn" id="share-btn" style="display:none">share link</button>
     <button class="btn-pill" id="copy-btn" style="display:none">copy result</button>
@@ -1159,7 +1365,7 @@
   </div>
 </div>
 
-<div id="diff-output">
+<div id="diff-output" role="tabpanel" aria-labelledby="vs-tab-side">
   <div class="placeholder">
     <span>Paste two versions of any text to review the changes</span>
     <span class="placeholder-usecases">Edited documents · LLM rewrites · code changes</span>
@@ -1229,6 +1435,17 @@ let mergeState       = {};    // {[segIdx]: {[chunkIdx]: 'left'|'right'|null|{cu
 let undoStack        = [];    // [{seg, chunk, prev}] or [{batch:true, seg, chunks}]
 let mergeActive      = false;
 let savedMergeStates = {};    // {[mode]: {mergeState, undoStack}} — persists across mode switches
+
+// Review view: "side" (Side-by-side, the default) or "guided" (one-at-a-time wizard).
+// Persisted to localStorage; not included in the share-link hash since both
+// views render from the same currentRows + mergeState.
+let currentView      = (function() {
+  const v = localStorage.getItem('differ-view');
+  return v === 'guided' ? 'guided' : 'side';
+})();
+let guidedIndex      = 0;     // index into enumerateChunks(currentRows) for the wizard
+let guidedCustomOpen = false; // true while the "Write my own" textarea is expanded
+let guidedAdvanceTimer = null; // pending auto-advance after a pick — cancelled on nav
 
 // More-modes dropdown
 const moreModesBtn = document.getElementById('more-modes-btn');
@@ -1807,7 +2024,14 @@ function makeCell(row, side) {
   return cell;
 }
 
+// Top-level renderer for the post-diff area. Both views work off the same
+// currentRows + mergeState, so switching is lossless.
 function renderDiff(rows) {
+  if (currentView === 'guided') renderGuided(rows);
+  else renderSideBySide(rows);
+}
+
+function renderSideBySide(rows) {
   const output = document.getElementById('diff-output');
   const stats  = document.getElementById('stats');
   output.innerHTML = '';
@@ -1875,11 +2099,445 @@ function renderDiff(rows) {
 
       div.appendChild(btnL);
       div.appendChild(btnR);
+
+      const reviewBtn = document.createElement('button');
+      reviewBtn.className = 'row-review-btn';
+      reviewBtn.textContent = 'review →';
+      reviewBtn.title = 'Walk through this section in the one-at-a-time view';
+      reviewBtn.dataset.reviewSeg = row.segIdx;
+      div.appendChild(reviewBtn);
     }
 
     output.appendChild(div);
   }
   applyHideEqual(rows.length - changedCount);
+}
+
+// ---------------------------------------------------------------------------
+// Guided wizard ("One at a time" — Direction B)
+// ---------------------------------------------------------------------------
+// Helper labels per chunk kind, used by the kicker microcopy.
+const GUIDED_KIND_LABEL = { replace: 'Change', insert: 'Add',    delete: 'Remove' };
+const GUIDED_KIND_MICRO = {
+  replace: 'The new version rewrites this.',
+  insert:  'The new version adds this.',
+  delete:  'The new version removes this.',
+};
+
+// The side a custom edit "belongs to" — used so confirmEdit's persistence
+// shape ({custom, side}) keeps round-tripping through the existing renderers.
+function guidedCustomSide(kind) {
+  return kind === 'delete' ? 'left' : 'right';
+}
+
+// Decision class for stepper dots: 'dec-left' | 'dec-right' | 'dec-custom' | ''
+function guidedDecisionClass(dec) {
+  if (dec == null) return '';
+  if (typeof dec === 'object') return 'dec-custom';
+  if (dec === 'left')  return 'dec-left';
+  if (dec === 'right') return 'dec-right';
+  return '';
+}
+
+// Apply a decision from the wizard. Unlike applyMergeDecision, this never
+// toggles off — picking the same side again is a no-op so auto-advance feels
+// predictable.
+function guidedPick(segIdx, chunkIdx, side) {
+  const prev = mergeState[segIdx]?.[chunkIdx] ?? null;
+  if (prev === side) { guidedAdvance(); return; }
+  undoStack.push({ seg: segIdx, chunk: chunkIdx, prev });
+  if (undoStack.length > 20) undoStack.shift();
+  if (!mergeState[segIdx]) mergeState[segIdx] = {};
+  mergeState[segIdx][chunkIdx] = side;
+  mergeActive = true;
+  hideMergeHint();
+  updateHash();
+  // Keep the (hidden) merge panel + progress bar synced in the background so
+  // switching back to Side-by-side feels instant.
+  updateMergePanel();
+  renderGuidedStep({ advanceAfter: true });
+}
+
+function guidedSetCustom(segIdx, chunkIdx, text, side) {
+  const prev = mergeState[segIdx]?.[chunkIdx] ?? null;
+  undoStack.push({ seg: segIdx, chunk: chunkIdx, prev });
+  if (undoStack.length > 20) undoStack.shift();
+  if (!mergeState[segIdx]) mergeState[segIdx] = {};
+  mergeState[segIdx][chunkIdx] = { custom: text, side };
+  mergeActive = true;
+  hideMergeHint();
+  updateHash();
+  updateMergePanel();
+  guidedCustomOpen = false;
+  renderGuidedStep({ advanceAfter: true });
+}
+
+// Any explicit nav cancels a still-pending auto-advance from a previous pick,
+// so a user who clicks "previous"/"skip"/a dot right after picking doesn't
+// get jumped further than they asked for.
+function cancelPendingAdvance() {
+  if (guidedAdvanceTimer !== null) {
+    clearTimeout(guidedAdvanceTimer);
+    guidedAdvanceTimer = null;
+  }
+}
+
+function guidedAdvance() {
+  cancelPendingAdvance();
+  const chunks = enumerateChunks(currentRows);
+  const wasBeforeDone = guidedIndex < chunks.length;
+  guidedIndex = Math.min(guidedIndex + 1, chunks.length); // == length → done screen
+  if (wasBeforeDone && guidedIndex === chunks.length && chunks.length > 0) {
+    const reviewed = chunks.reduce((n, c) =>
+      n + ((mergeState[c.segIdx]?.[c.chunkIdx] ?? null) != null ? 1 : 0), 0);
+    analytics.track('guided_complete', { total: chunks.length, reviewed });
+  }
+  guidedCustomOpen = false;
+  renderGuidedStep();
+}
+
+function guidedPrev() {
+  cancelPendingAdvance();
+  guidedIndex = Math.max(0, guidedIndex - 1);
+  guidedCustomOpen = false;
+  renderGuidedStep();
+}
+
+function guidedSkip() {
+  // Skip = move forward without changing the decision. (Undecided chunks stay
+  // unresolved; they'll render as the new version in the running preview but
+  // still show up in the side-by-side merge panel as "to decide".)
+  guidedAdvance();
+}
+
+function guidedJumpTo(i) {
+  cancelPendingAdvance();
+  const chunks = enumerateChunks(currentRows);
+  if (!chunks.length) return;
+  guidedIndex = Math.max(0, Math.min(i, chunks.length - 1));
+  guidedCustomOpen = false;
+  renderGuidedStep();
+}
+
+// Build the wizard scaffolding once, then re-render only the inner step + the
+// stepper + the running preview on every state change. The outer wrapper is
+// also rebuilt from scratch when compare() triggers a fresh diff.
+function renderGuided(rows) {
+  const output = document.getElementById('diff-output');
+  const stats  = document.getElementById('stats');
+  output.innerHTML = '';
+  output.classList.remove('is-home');
+
+  if (!rows || rows.length === 0) {
+    output.innerHTML = '<div class="placeholder">No sections found — try a different mode.</div>';
+    stats.textContent = '';
+    return;
+  }
+
+  const changedCount = rows.filter(r => r.type !== 'equal').length;
+  if (changedCount === 0) {
+    stats.textContent = `${rows.length} sections · identical`;
+    output.innerHTML = `
+      <div class="guided guided-empty">
+        <div class="g-empty-icon">✓</div>
+        <div class="g-empty-title">These texts are identical</div>
+        <div class="g-empty-sub">Nothing to review.</div>
+      </div>`;
+    return;
+  }
+
+  stats.textContent =
+    `${rows.length} sections · ${changedCount} changed · ${rows.length - changedCount} unchanged`;
+  // The wizard doesn't paginate equal rows — leave applyHideEqual to the
+  // side-by-side renderer so the toolbar's "show all / changed only" button
+  // doesn't reappear here.
+
+  // Clamp guidedIndex against the (possibly new) chunks length.
+  const chunks = enumerateChunks(rows);
+  if (guidedIndex > chunks.length) guidedIndex = chunks.length;
+
+  output.innerHTML = '<div class="guided" id="guided-root"></div>';
+  renderGuidedStep();
+}
+
+// Re-render the wizard's step area in place. `opts.advanceAfter` schedules an
+// auto-advance after a brief delay (used when picking a choice card). Any
+// re-render — including the ones triggered by opening / cancelling the custom
+// bar or jumping back from the done screen — first clears any pending advance
+// timer, so a stale 260ms timer from an earlier pick can't fire later and
+// jump the user past their intent.
+function renderGuidedStep(opts) {
+  cancelPendingAdvance();
+  const root = document.getElementById('guided-root');
+  if (!root) return;
+  const chunks = enumerateChunks(currentRows);
+  const total = chunks.length;
+
+  if (total === 0) {
+    root.innerHTML = `
+      <div class="guided-empty">
+        <div class="g-empty-icon">✓</div>
+        <div class="g-empty-title">These texts are identical</div>
+        <div class="g-empty-sub">Nothing to review.</div>
+      </div>`;
+    return;
+  }
+
+  if (guidedIndex >= total) {
+    // Done screen
+    const finalText = flatPreviewText();
+    const reviewed = chunks.reduce((n, c) => n + ((mergeState[c.segIdx]?.[c.chunkIdx] ?? null) != null ? 1 : 0), 0);
+    root.innerHTML = `
+      <div class="guided-done">
+        <div class="g-done-icon">✓</div>
+        <div class="g-done-title">All ${total} changes reviewed</div>
+        <div class="g-done-sub">${reviewed === total ? 'You picked a version for each change.' : `${total - reviewed} left undecided (the new version will be used in the preview).`}</div>
+        <div class="g-done-card" id="g-done-text"></div>
+        <div class="g-done-actions">
+          <button class="btn-ghost" id="g-review-again">↺ review again</button>
+          <button class="btn-pill" id="g-done-copy">copy final text</button>
+        </div>
+      </div>`;
+    document.getElementById('g-done-text').textContent = finalText;
+    document.getElementById('g-review-again').addEventListener('click', () => { guidedIndex = 0; renderGuidedStep(); });
+    document.getElementById('g-done-copy').addEventListener('click', () => guidedCopyFinal(document.getElementById('g-done-copy')));
+    return;
+  }
+
+  const cur = chunks[guidedIndex];
+  const ctx = chunkContext(currentRows, cur.segIdx, cur.chunkIdx);
+  const dec = mergeState[cur.segIdx]?.[cur.chunkIdx] ?? null;
+  const kindLabel = GUIDED_KIND_LABEL[cur.kind] || 'Change';
+  const micro     = GUIDED_KIND_MICRO[cur.kind] || '';
+
+  // Stepper
+  const dots = chunks.map((c, i) => {
+    const d  = mergeState[c.segIdx]?.[c.chunkIdx] ?? null;
+    const cl = guidedDecisionClass(d);
+    return `<button class="g-dot ${i === guidedIndex ? 'current' : ''} ${cl}" data-jump="${i}" aria-label="Change ${i + 1} of ${total}"></button>`;
+  }).join('');
+
+  // Stage quote
+  const beforeHtml = cur.before ? `<span class="g-before">${escapeHtml(cur.before)}</span>` : '';
+  const afterHtml  = cur.after  ? `<span class="g-after">${escapeHtml(cur.after)}</span>`  : '';
+  const arrowHtml  = (cur.before && cur.after) ? '<span class="g-arrow">→</span>' : '';
+  const ctxBefore  = ctx.before ? `<span class="g-ctx-before">${escapeHtml(ctx.before)} </span>` : '';
+  const ctxAfter   = ctx.after  ? `<span class="g-ctx-after"> ${escapeHtml(ctx.after)}</span>`  : '';
+
+  // Choice cards
+  const customSide = guidedCustomSide(cur.kind);
+  const customText = (dec && typeof dec === 'object') ? dec.custom : '';
+  const choiceCards = [];
+  if (cur.kind !== 'insert') {
+    // Keep — the original wording (left side)
+    choiceCards.push({
+      pick: 'left',
+      label: cur.kind === 'delete' ? 'Keep it' : 'Keep',
+      text:  cur.before,
+      hint:  'your original wording',
+      picked: dec === 'left',
+    });
+  }
+  if (cur.kind !== 'delete') {
+    choiceCards.push({
+      pick: 'right',
+      label: cur.kind === 'insert' ? 'Add it' : 'Use new',
+      text:  cur.after,
+      hint:  'the suggested edit',
+      picked: dec === 'right',
+    });
+  }
+  // Always offer custom — for inserts/replacements it overrides the new wording;
+  // for pure deletes it lets you keep a rewritten version instead of dropping it.
+  choiceCards.push({
+    pick: 'custom',
+    label: 'Write my own',
+    text:  customText || 'type something different',
+    hint:  customText ? 'your custom version' : 'rewrite it your way',
+    picked: !!(dec && typeof dec === 'object'),
+    empty: !customText,
+  });
+
+  const twoUp = choiceCards.length === 2 ? 'two-up' : '';
+  const choicesHtml = choiceCards.map(c => `
+    <button class="g-choice ${c.picked ? 'picked' : ''}" data-pick="${c.pick}">
+      <span class="g-choice-label">${c.label}</span>
+      <span class="g-choice-text ${c.empty ? 'empty' : ''}">${escapeHtml(c.text || '')}</span>
+      <span class="g-choice-hint">${c.hint}</span>
+    </button>`).join('');
+
+  // Custom textarea (collapsible)
+  const customBar = guidedCustomOpen ? `
+    <div class="g-custom-bar">
+      <textarea class="g-custom-input" id="g-custom-input" placeholder="type your version…">${escapeHtml(customText || cur.after || cur.before || '')}</textarea>
+      <div class="g-custom-actions">
+        <button class="btn-pill" id="g-custom-save">save</button>
+        <button class="btn-ghost" id="g-custom-cancel">cancel</button>
+      </div>
+    </div>` : '';
+
+  // Preview at the bottom
+  const preview = flatPreviewText();
+
+  root.innerHTML = `
+    <div class="g-stepper">
+      <div class="g-dots">${dots}</div>
+      <div class="g-counter"><strong>${guidedIndex + 1}</strong> of ${total}</div>
+    </div>
+    <div class="g-stage">
+      <div class="g-kicker"><strong>${kindLabel}</strong> — change ${guidedIndex + 1} of ${total}</div>
+      <div class="g-quote">${ctxBefore}${beforeHtml}${arrowHtml}${afterHtml}${ctxAfter}</div>
+      <div class="g-micro">${micro}</div>
+    </div>
+    <div class="g-choices ${twoUp}">${choicesHtml}</div>
+    ${customBar}
+    <div class="g-nav">
+      <button class="btn-ghost" id="g-prev" ${guidedIndex === 0 ? 'disabled' : ''}>← previous</button>
+      <span class="g-nav-spacer"></span>
+      <button class="btn-ghost" id="g-skip">skip →</button>
+    </div>
+    <div class="g-preview">
+      <span class="g-preview-label">your final version</span>
+      <div class="g-preview-text" id="g-preview-text"></div>
+      <div class="g-preview-actions">
+        <button class="btn-pill" id="g-preview-copy">copy</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('g-preview-text').textContent = preview;
+  document.getElementById('g-preview-copy').addEventListener('click', () => guidedCopyFinal(document.getElementById('g-preview-copy')));
+
+  // Stepper jumps
+  root.querySelectorAll('.g-dot').forEach(dot => {
+    dot.addEventListener('click', () => guidedJumpTo(+dot.dataset.jump));
+  });
+  // Nav
+  document.getElementById('g-prev').addEventListener('click', guidedPrev);
+  document.getElementById('g-skip').addEventListener('click', guidedSkip);
+
+  // Choice cards
+  root.querySelectorAll('.g-choice').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pick = btn.dataset.pick;
+      if (pick === 'custom') {
+        guidedCustomOpen = true;
+        renderGuidedStep();
+        const input = document.getElementById('g-custom-input');
+        if (input) { input.focus(); input.select(); }
+        return;
+      }
+      guidedPick(cur.segIdx, cur.chunkIdx, pick);
+    });
+  });
+
+  // Custom textarea handlers
+  if (guidedCustomOpen) {
+    const input  = document.getElementById('g-custom-input');
+    const save   = document.getElementById('g-custom-save');
+    const cancel = document.getElementById('g-custom-cancel');
+    save.addEventListener('click', () => {
+      const txt = (input.value || '').trim();
+      guidedSetCustom(cur.segIdx, cur.chunkIdx, txt, customSide);
+    });
+    cancel.addEventListener('click', () => { guidedCustomOpen = false; renderGuidedStep(); });
+    input.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); save.click(); }
+      if (e.key === 'Escape') { e.preventDefault(); cancel.click(); }
+    });
+    setTimeout(() => { input.focus(); input.select(); }, 0);
+  }
+
+  if (opts && opts.advanceAfter) {
+    guidedAdvanceTimer = setTimeout(() => {
+      guidedAdvanceTimer = null;
+      guidedAdvance();
+    }, 260);
+  }
+}
+
+// Small util — we use innerHTML for the stage to keep the markup readable, so
+// any user-controlled text (the chunk's own before/after, context snippets,
+// custom edits) must be escaped first.
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function guidedCopyFinal(btnEl) {
+  const text = flatPreviewText();
+  const flash = msg => {
+    if (!btnEl) return;
+    const orig = btnEl.textContent;
+    btnEl.textContent = msg;
+    setTimeout(() => { btnEl.textContent = orig; }, 1500);
+  };
+  analytics.track('copy_merge', { source: 'guided' });
+  navigator.clipboard.writeText(text).then(() => flash('copied!')).catch(() => {
+    const ta = Object.assign(document.createElement('textarea'), { value: text });
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    flash('copied!');
+  });
+}
+
+// Show/hide chrome that depends on the active view (the merge panel only
+// makes sense in Side-by-side; the wizard renders its own running preview).
+function applyViewChrome(hasDiff) {
+  const sw = document.getElementById('view-switch');
+  if (sw) {
+    sw.style.display = hasDiff ? '' : 'none';
+    sw.querySelectorAll('.vs-btn').forEach(b => {
+      const on = b.dataset.view === currentView;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    // Keep the tabpanel's label pointing at the active tab.
+    const panel = document.getElementById('diff-output');
+    if (panel) panel.setAttribute('aria-labelledby', currentView === 'guided' ? 'vs-tab-guided' : 'vs-tab-side');
+  }
+  const merge = document.getElementById('merge-panel');
+  if (merge) {
+    if (!hasDiff) merge.style.display = 'none';
+    else merge.style.display = (currentView === 'guided') ? 'none' : '';
+  }
+  // toggle-equal lives in side-by-side; the wizard doesn't paginate equal rows.
+  const tEq = document.getElementById('toggle-equal-btn');
+  if (tEq && currentView === 'guided') tEq.style.display = 'none';
+}
+
+function setView(view, opts) {
+  if (view !== 'side' && view !== 'guided') return;
+  if (view === currentView) return;
+  cancelPendingAdvance();
+  currentView = view;
+  localStorage.setItem('differ-view', view);
+  guidedCustomOpen = false;
+  if (opts && typeof opts.jumpTo === 'number') {
+    guidedIndex = Math.max(0, opts.jumpTo);
+  } else if (view === 'guided') {
+    // If coming into the wizard with everything decided and the index past
+    // the end, drop to the first unresolved chunk so the user lands somewhere
+    // useful instead of the done screen.
+    const chunks = enumerateChunks(currentRows);
+    if (guidedIndex >= chunks.length) {
+      const firstUnresolved = chunks.findIndex(c => (mergeState[c.segIdx]?.[c.chunkIdx] ?? null) == null);
+      guidedIndex = firstUnresolved >= 0 ? firstUnresolved : 0;
+    }
+  }
+  const hasDiff = currentRows.some(r => r.type !== 'equal');
+  applyViewChrome(hasDiff);
+  if (currentRows.length) renderDiff(currentRows);
+  if (currentView === 'side') {
+    // Re-sync visuals + the merge panel from the shared state.
+    reapplyMergeVisuals();
+    updateMergePanel();
+  } else {
+    updateMergePanel(); // keeps the progress pill / hash in sync
+  }
+  analytics.track('view_switch', { view });
 }
 
 // ---------------------------------------------------------------------------
@@ -1905,6 +2563,9 @@ function resetMergeState() {
   mergeState  = {};
   undoStack   = [];
   mergeActive = false;
+  guidedIndex = 0;
+  guidedCustomOpen = false;
+  cancelPendingAdvance();
   if (editBarState) closeEditBar();
 }
 
@@ -1942,6 +2603,141 @@ function applyMergeDecision(seg, chunk, side, skipUndo) {
 // restores paragraph breaks / blank lines / indentation in the final text.
 function rowSeparator(row) {
   return (row.right != null ? row.rightPre : row.leftPre) ?? '';
+}
+
+// Ordered list of actionable chunks across `rows`. Same chunkIdx walk used by
+// renderHighlightedDiff / computeMergedParts so all renderers agree on what
+// counts as a change. Used by the progress bar, the guided wizard's stepper,
+// and the per-section "Review" deep link.
+function enumerateChunks(rows) {
+  const out = [];
+  for (const row of rows || []) {
+    if (row.type === 'equal' || row.segIdx === undefined) continue;
+    if (row.type === 'removed') {
+      out.push({ segIdx: row.segIdx, chunkIdx: 0, kind: 'delete', before: row.left || '', after: '' });
+    } else if (row.type === 'added') {
+      out.push({ segIdx: row.segIdx, chunkIdx: 0, kind: 'insert', before: '', after: row.right || '' });
+    } else if (row.type === 'changed' && row.left && row.right && Array.isArray(row.parts)) {
+      const parts = row.parts;
+      let chunkIdx = 0;
+      for (let i = 0; i < parts.length; i++) {
+        const p = parts[i];
+        const nextIsAdded = i + 1 < parts.length && parts[i + 1].added;
+        if (!p.removed && !p.added) continue;
+        if (p.removed) {
+          if (nextIsAdded) {
+            out.push({ segIdx: row.segIdx, chunkIdx, kind: 'replace', before: p.value, after: parts[i + 1].value });
+            // chunkIdx bumps in the added branch
+          } else {
+            out.push({ segIdx: row.segIdx, chunkIdx, kind: 'delete', before: p.value, after: '' });
+            chunkIdx++;
+          }
+        } else {
+          const prevIsRemoved = i > 0 && parts[i - 1].removed;
+          if (!prevIsRemoved) {
+            out.push({ segIdx: row.segIdx, chunkIdx, kind: 'insert', before: '', after: p.value });
+          }
+          chunkIdx++;
+        }
+      }
+    } else if (row.type === 'changed') {
+      if (row.left && !row.right) {
+        out.push({ segIdx: row.segIdx, chunkIdx: 0, kind: 'delete', before: row.left, after: '' });
+      } else if (row.right && !row.left) {
+        out.push({ segIdx: row.segIdx, chunkIdx: 0, kind: 'insert', before: '', after: row.right });
+      }
+    }
+  }
+  return out;
+}
+
+// Trim a context snippet to roughly `limit` chars, biased to end on a sentence
+// boundary so the snippet reads as a phrase rather than mid-word. `end`
+// controls which side of the trim to keep ("tail" = keep the end, looking
+// back; "head" = keep the start, looking forward).
+function trimContextToBoundary(text, limit, end) {
+  if (!text) return '';
+  if (text.length <= limit) return text;
+  if (end === 'tail') {
+    const slice = text.slice(-limit);
+    const m = slice.match(/[.!?]\s+([^]*?)$/);
+    return (m ? m[1] : slice).replace(/^\s+/, '');
+  }
+  const slice = text.slice(0, limit);
+  const m = slice.match(/^([^]*?[.!?])\s+/);
+  return (m ? m[1] : slice).replace(/\s+$/, '');
+}
+
+// Collect the readable text contributed by `row` (one side; favors the new
+// version for added / changed rows, the original for removed). Used to build
+// the surrounding context shown in the guided wizard.
+function rowDisplayText(row) {
+  if (!row) return '';
+  if (row.type === 'equal') return row.left || '';
+  if (row.type === 'removed') return row.left || '';
+  if (row.type === 'added') return row.right || '';
+  return row.right || row.left || '';
+}
+
+// ~140 chars of surrounding text on each side of the chunk at (segIdx, chunkIdx),
+// trimmed at the nearest sentence boundary. Mirrors the contextFor() helper in
+// the design bundle's directionB.jsx, adapted to currentRows.
+function chunkContext(rows, segIdx, chunkIdx) {
+  rows = rows || [];
+  const idx = rows.findIndex(r => r.segIdx === segIdx);
+  if (idx < 0) return { before: '', after: '' };
+  const target = rows[idx];
+
+  let beforeIn = '', afterIn = '';
+  if (target.type === 'changed' && target.left && target.right && Array.isArray(target.parts)) {
+    const parts = target.parts;
+    let curChunk = 0;
+    let phase = 'before'; // 'before' | 'in' | 'after'
+    for (let i = 0; i < parts.length; i++) {
+      const p = parts[i];
+      const nextIsAdded = i + 1 < parts.length && parts[i + 1].added;
+      if (!p.removed && !p.added) {
+        if (phase === 'before') beforeIn += p.value;
+        else if (phase === 'after') afterIn += p.value;
+        continue;
+      }
+      if (p.removed) {
+        if (curChunk === chunkIdx) phase = nextIsAdded ? 'in' : 'after';
+        if (!nextIsAdded) curChunk++;
+      } else {
+        if (curChunk === chunkIdx) phase = 'after';
+        curChunk++;
+      }
+    }
+  }
+
+  let beforeNeighbor = '', afterNeighbor = '';
+  for (let i = idx - 1; i >= 0 && beforeNeighbor.length < 240; i--) {
+    beforeNeighbor = rowDisplayText(rows[i]) + ' ' + beforeNeighbor;
+  }
+  for (let i = idx + 1; i < rows.length && afterNeighbor.length < 240; i++) {
+    afterNeighbor += ' ' + rowDisplayText(rows[i]);
+  }
+
+  const fullBefore = (beforeNeighbor + beforeIn).replace(/\s+/g, ' ').trim();
+  const fullAfter = (afterIn + afterNeighbor).replace(/\s+/g, ' ').trim();
+  return {
+    before: trimContextToBoundary(fullBefore, 140, 'tail'),
+    after:  trimContextToBoundary(fullAfter,  140, 'head'),
+  };
+}
+
+// Flatten computeMergedParts into a plain string, rendering unresolved chunks
+// as the *new* version (the design's running preview behavior). Used by the
+// guided wizard's bottom preview + done screen.
+function flatPreviewText() {
+  const tokens = computeMergedParts();
+  let out = '';
+  for (const t of tokens) {
+    if (t.type === 'text' || t.type === 'sep') out += t.text;
+    else out += (t.new ?? t.old ?? '');
+  }
+  return out.replace(/^(\s*\n)+/, '').replace(/\s+$/, '');
 }
 
 function computeMergedParts() {
@@ -2214,17 +3010,15 @@ function updateColHeaderBtns() {
 }
 
 // "N of M changes reviewed" — a chunk counts as reviewed once it has any decision
-// (left / right / custom edit). Drives the progress pill in the toolbar.
+// (left / right / custom edit). Shares the enumerateChunks walk so the progress
+// pill, the guided stepper, and the merge result all agree on what counts.
 function reviewProgress() {
-  let total = 0, done = 0;
-  for (const row of currentRows) {
-    if (row.type === 'equal' || row.segIdx === undefined) continue;
-    const n = row.chunkCount || 1;
-    total += n;
-    const decs = mergeState[row.segIdx] || {};
-    for (let c = 0; c < n; c++) if (decs[c] != null) done++;
+  const chunks = enumerateChunks(currentRows);
+  let done = 0;
+  for (const c of chunks) {
+    if ((mergeState[c.segIdx]?.[c.chunkIdx] ?? null) != null) done++;
   }
-  return { total, done };
+  return { total: chunks.length, done };
 }
 
 function updateProgressBar() {
@@ -2283,6 +3077,16 @@ function acceptAllRows(side) {
 
 // Click: highlighted spans in diff table → merge decision
 document.getElementById('diff-output').addEventListener('click', e => {
+  // Per-section "Review →" → switch to wizard at this section's first chunk
+  const reviewBtn = e.target.closest('.row-review-btn');
+  if (reviewBtn) {
+    const seg = +reviewBtn.dataset.reviewSeg;
+    const chunks = enumerateChunks(currentRows);
+    const jumpTo = chunks.findIndex(c => c.segIdx === seg);
+    setView('guided', { jumpTo: jumpTo >= 0 ? jumpTo : 0 });
+    return;
+  }
+
   // Per-chunk edit buttons
   const diffEditBtn = e.target.closest('.diff-edit-btn');
   if (diffEditBtn) {
@@ -2351,6 +3155,13 @@ document.getElementById('merge-panel').addEventListener('click', e => {
   const el = e.target.closest('[data-resolve-seg]');
   if (!el) return;
   applyMergeDecision(+el.dataset.resolveSeg, +el.dataset.resolveChunk, el.dataset.resolveSide);
+});
+
+// View switcher: Side by side ⇄ One at a time
+document.getElementById('view-switch').addEventListener('click', e => {
+  const btn = e.target.closest('.vs-btn');
+  if (!btn) return;
+  setView(btn.dataset.view);
 });
 
 // ---------------------------------------------------------------------------
@@ -2590,14 +3401,15 @@ function bindEmptyState() {
 // depending on whether there's a real comparison on screen.
 function setReviewChrome({ hasText, hasDiff }) {
   const toolbar = document.querySelector('.toolbar');
-  const panel   = document.getElementById('merge-panel');
   if (toolbar) toolbar.style.display = hasText ? '' : 'none';
-  if (panel)   panel.style.display   = hasDiff ? '' : 'none';
   document.getElementById('copy-btn').style.display = hasDiff ? '' : 'none';
   if (!hasDiff) {
     const rp = document.getElementById('review-progress');
     if (rp) rp.style.display = 'none';
   }
+  // The merge panel + view switcher are view-aware — let applyViewChrome decide
+  // exactly what to show (the wizard hides the merge panel itself).
+  applyViewChrome(hasDiff);
 }
 
 // ---------------------------------------------------------------------------
@@ -3238,6 +4050,16 @@ function initApp() {
       reapplyMergeVisuals();
       updateMergePanel();
     }
+  }
+
+  // If the saved view is "guided", land on the first unresolved chunk (or the
+  // done screen if every decision was already made in the shared link) rather
+  // than always starting at chunk 1.
+  if (currentView === 'guided' && currentRows.some(r => r.type !== 'equal')) {
+    const chunks = enumerateChunks(currentRows);
+    const firstUnresolved = chunks.findIndex(c => (mergeState[c.segIdx]?.[c.chunkIdx] ?? null) == null);
+    guidedIndex = firstUnresolved >= 0 ? firstUnresolved : chunks.length;
+    renderGuidedStep();
   }
 }
 

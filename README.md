@@ -57,6 +57,13 @@ The **options** dropdown in the header contains compare and matching settings. T
 
 The **show all / changed only** button in the toolbar toggles unchanged rows in the diff output — hides unchanged sections to focus on changes. Default: changed only.
 
+### Review modes
+
+Two ways to walk through the same diff — toggle from the **side by side ⇄ one at a time** switch in the toolbar. The choice persists in `localStorage` (`differ-view`, default `side`); switching mid-flow is lossless because both modes render from the same `currentRows` + `mergeState`.
+
+- **Side by side** (the default) — the two-column diff with click-to-pick highlights, `«`/`»` row buttons, `Keep all` / `Accept all` pills, and the sticky "your final version" panel. Each changed row also surfaces a small **review →** affordance that switches to one-at-a-time focused on that section.
+- **One at a time** — a guided wizard. Stepper dots across the top (colored by decision: clay = original, forest = new, purple = custom); a stage card showing the change in its surrounding context (`…before` + struck old `→` new + `after…`); three choice cards (**keep / use new / write my own**, with the last expanding an inline textarea that round-trips through the same `{custom, side}` mergeState as the side-by-side edit bar); previous / skip nav; a running final-version preview pinned at the bottom; and a done screen with **copy final text** when you reach the end. The "Identical / nothing to review" state replaces the wizard when there are no changes.
+
 ### Merge mode
 
 Activated automatically on the first click of any highlighted word, a `«`/`»` button, or **Keep all / Accept all**.
@@ -305,6 +312,6 @@ Open `index.html` directly in a browser. No build step, no server needed. A "try
 
 See [todo.md](todo.md). Key remaining items:
 
-- **Editorial redesign — Phase 2**: a "one at a time" guided review mode (walk through each change like a Google-Docs suggestion queue), a view switcher between it and the current "side by side" view, and a per-section "Review" deep link. Phase 1 (editorial `paper` theme + default, editorial home, review-strip restyle, progress bar, Keep all / Accept all) shipped; Phase 2 is designed but not built — see the plan file referenced in `todo.md`.
 - Native iOS app with Share Sheet integration
 - App naming — "differ" didn't resonate with a non-technical tester; needs broader input
+- Monetization — tip jar (Buy Me a Coffee / Ko-fi) and optional pro features (file upload, export); see `todo.md` for the full plan
