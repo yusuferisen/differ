@@ -1176,7 +1176,6 @@
     .g-choices {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 22px;
     }
-    .g-choices.two-up { grid-template-columns: repeat(2, 1fr); }
     .g-choice {
       display: flex; flex-direction: column; gap: 8px; text-align: left;
       background: var(--bg-panel); border: 1px solid var(--border);
@@ -1200,6 +1199,10 @@
       color: var(--text-bright); flex: 1; word-break: break-word;
     }
     .g-choice-text.empty { color: var(--text-dim); font-style: italic; }
+    .g-choice-text.struck {
+      text-decoration: line-through; text-decoration-thickness: 1px;
+      color: var(--text-dim);
+    }
     .g-choice-hint { font-size: 11px; color: var(--text-dim); }
 
     .g-custom-bar {
@@ -1273,7 +1276,6 @@
       .g-stage { padding: 20px 16px; }
       .g-quote { font-size: 16px; }
       .g-choices { grid-template-columns: 1fr; }
-      .g-choices.two-up { grid-template-columns: 1fr; }
       .g-choice { min-height: auto; padding: 14px; }
       .g-preview { margin: 0 -16px -160px; padding: 10px 14px; flex-wrap: wrap; }
       .g-preview-text { width: 100%; order: 2; }
@@ -2324,31 +2326,53 @@ function renderGuidedStep(opts) {
   const ctxBefore  = ctx.before ? `<span class="g-ctx-before">${escapeHtml(ctx.before)} </span>` : '';
   const ctxAfter   = ctx.after  ? `<span class="g-ctx-after"> ${escapeHtml(ctx.after)}</span>`  : '';
 
-  // Choice cards
+  // Choice cards. Every chunk kind exposes three options:
+  //   left   = don't apply the change (keep original / leave the addition out)
+  //   right  = apply the change (use new / accept the deletion)
+  //   custom = write something different
+  // The right card on a delete (and the left card on an insert) shows the chunk
+  // text struck through, mirroring the stage card and making it visually clear
+  // that the picked side won't appear in the final version.
   const customSide = guidedCustomSide(cur.kind);
   const customText = (dec && typeof dec === 'object') ? dec.custom : '';
   const choiceCards = [];
-  if (cur.kind !== 'insert') {
-    // Keep — the original wording (left side)
+  if (cur.kind === 'insert') {
+    choiceCards.push({
+      pick: 'left',
+      label: 'Leave it out',
+      text:  cur.after,
+      hint:  'leave it out of your version',
+      picked: dec === 'left',
+      struck: true,
+    });
+  } else {
     choiceCards.push({
       pick: 'left',
       label: cur.kind === 'delete' ? 'Keep it' : 'Keep',
       text:  cur.before,
-      hint:  'your original wording',
+      hint:  cur.kind === 'delete' ? 'leave the original in' : 'your original wording',
       picked: dec === 'left',
     });
   }
-  if (cur.kind !== 'delete') {
+  if (cur.kind === 'delete') {
+    choiceCards.push({
+      pick: 'right',
+      label: 'Remove it',
+      text:  cur.before,
+      hint:  'drop it from your version',
+      picked: dec === 'right',
+      struck: true,
+    });
+  } else {
     choiceCards.push({
       pick: 'right',
       label: cur.kind === 'insert' ? 'Add it' : 'Use new',
       text:  cur.after,
-      hint:  'the suggested edit',
+      hint:  cur.kind === 'insert' ? 'add it to your version' : 'the suggested edit',
       picked: dec === 'right',
     });
   }
-  // Always offer custom — for inserts/replacements it overrides the new wording;
-  // for pure deletes it lets you keep a rewritten version instead of dropping it.
+  // Custom: overrides the chunk with whatever the user types.
   choiceCards.push({
     pick: 'custom',
     label: 'Write my own',
@@ -2358,11 +2382,10 @@ function renderGuidedStep(opts) {
     empty: !customText,
   });
 
-  const twoUp = choiceCards.length === 2 ? 'two-up' : '';
   const choicesHtml = choiceCards.map(c => `
     <button class="g-choice ${c.picked ? 'picked' : ''}" data-pick="${c.pick}">
       <span class="g-choice-label">${c.label}</span>
-      <span class="g-choice-text ${c.empty ? 'empty' : ''}">${escapeHtml(c.text || '')}</span>
+      <span class="g-choice-text ${c.empty ? 'empty' : ''} ${c.struck ? 'struck' : ''}">${escapeHtml(c.text || '')}</span>
       <span class="g-choice-hint">${c.hint}</span>
     </button>`).join('');
 
@@ -2389,7 +2412,7 @@ function renderGuidedStep(opts) {
       <div class="g-quote">${ctxBefore}${beforeHtml}${arrowHtml}${afterHtml}${ctxAfter}</div>
       <div class="g-micro">${micro}</div>
     </div>
-    <div class="g-choices ${twoUp}">${choicesHtml}</div>
+    <div class="g-choices">${choicesHtml}</div>
     ${customBar}
     <div class="g-nav">
       <button class="btn-ghost" id="g-prev" ${guidedIndex === 0 ? 'disabled' : ''}>← previous</button>
@@ -2728,14 +2751,16 @@ function chunkContext(rows, segIdx, chunkIdx) {
 }
 
 // Flatten computeMergedParts into a plain string, rendering unresolved chunks
-// as the *new* version (the design's running preview behavior). Used by the
-// guided wizard's bottom preview + done screen.
+// as the *new* version (the design's running preview behavior). For unresolved
+// deletes, "new" is no text — so the chunk is omitted, not shown as the old
+// wording. That makes skipping a delete feel symmetric with skipping an
+// insert: both default to "accept the change".
 function flatPreviewText() {
   const tokens = computeMergedParts();
   let out = '';
   for (const t of tokens) {
     if (t.type === 'text' || t.type === 'sep') out += t.text;
-    else out += (t.new ?? t.old ?? '');
+    else if (t.new != null) out += t.new;
   }
   return out.replace(/^(\s*\n)+/, '').replace(/\s+$/, '');
 }
