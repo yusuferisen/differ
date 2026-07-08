@@ -4,6 +4,8 @@ A browser-based text review and merge tool. Paste two versions of any text to se
 
 **[differapp.com](https://differapp.com)** — no server, no installation. Installable as a web app from Chrome, Edge, or Safari. Also available as a [Chrome extension](#chrome-extension) for comparing text across any web page.
 
+Status: see [`PROGRESS.md`](PROGRESS.md).
+
 ---
 
 ## What makes it different
@@ -149,123 +151,7 @@ To install locally: load `extension/` as an unpacked extension at `chrome://exte
 
 ## Architecture
 
-A single HTML file with two bundled dependencies (no CDN, fully offline):
-
-| Dependency | Purpose | Size |
-|---|---|---|
-| [compromise.js](https://github.com/spencermountain/compromise) v14.15.0 | Sentence and clause tokenization | 353 KB |
-| [jsdiff](https://github.com/kpdecker/jsdiff) v8.0.4 | LCS-based sequence and word/char diff | 30 KB |
-
-### Diff pipeline
-
-```
-splitText(text, mode)
-  → segments[]
-
-norm(s)
-  → apply ignoreWS (collapse whitespace) and/or ignoreCase (lowercase)
-
-computeDiff(segs1, segs2, fuzzy)
-  → Diff.diffArrays() with optional norm-based comparator
-  → for removed+added blocks:
-      fuzzy off → positional pairing
-      fuzzy on  → fuzzyPairBlocks() using segmentSimilarity()
-  → for each changed row (both sides present):
-      row.parts      = diffWords() or diffChars() with ignoreCase / ignoreWS normalization
-      row.segIdx     = unique integer (merge state key)
-      row.chunkCount = number of highlighted chunks
-  → for removed, added, or changed-with-one-side rows:
-      row.segIdx     = unique integer
-      row.chunkCount = 1 (whole segment is one merge decision)
-
-renderDiff(rows)
-  → sticky column header: "Original"/"Suggested" + subtitles + "Keep all"/"Accept all" pills (data-allside)
-  → renderHighlightedDiff(row.parts, side, row.segIdx)  // changed rows
-  → makeHighlightSpan(text, ...)                         // removed/added rows
-      each highlighted span: data-seg, data-chunk, data-side, data-base
-      class from resolveSpanClass() reading mergeState
-  → «/» accept-all buttons on all non-equal rows (hover-visible)
-  → merge hint (removed on first merge action)
-
-// On the empty state, renderDiff is skipped — compare() injects emptyStateHTML()
-// (the editorial home) into #diff-output and adds the .is-home class so the page
-// scrolls naturally instead of trapping the home in the diff area's scroll box.
-```
-
-After any decision change, `updateMergePanel()` re-renders the panel and calls `updateProgressBar()` (the `N of M reviewed` pill, via `reviewProgress()`) and `updateColHeaderBtns()` (the `Keep all`/`Accept all` active highlight). `acceptAllRows(side)` and the per-row `«`/`»` handler push `batchAll` / `batch` undo entries respectively.
-
-### Merge state model
-
-```js
-mergeState = {
-  [segIdx]: {
-    [chunkIdx]: 'left' | 'right' | null   // null = unresolved
-  }
-}
-undoStack        = [{ seg, chunk, prev }]      // single chunk
-                 | { batch, seg, chunks[] }     // a whole row («/»)
-                 | { batchAll, chunks: [{seg, chunkIdx, prev}] }  // Keep all / Accept all
-savedMergeStates = { [mode]: { mergeState, undoStack } }  // per-mode persistence
-```
-
-Chunk index is computed identically on both sides by walking `row.parts`:
-- `chunkIdx` increments after each `{added}` part, and after a `{removed}` not followed by `{added}`
-
-### Shareable URL encoding
-
-```js
-// Hash contains base64(JSON.stringify({o, n, md, fz, ch, ic, iw, ms}))
-// o/n = texts, md = mode, fz/ch/ic/iw = toggle booleans, ms = mergeState
-// Decoded on load → texts set → compare() → mergeState restored
-```
-
-JSON keys are intentionally short to minimize URL length. Encoded payload is capped at `HASH_MAX` (32KB); over that the hash is omitted from the URL and the share button shows it can't be shared. No compression yet — that's the lever for fitting larger comparisons.
-
-### Similarity function (fuzzy mode)
-
-```
-segmentSimilarity(a, b) =
-  0.6 × jaccardSimilarity     // word set overlap
-  0.2 × firstWordBonus        // 1 if first words match, else 0
-  0.2 × lengthRatio           // min(wA, wB) / max(wA, wB)
-
-Threshold: 0.25
-```
-
-### Theme system
-
-Themes are JS objects of CSS custom property overrides applied to `document.documentElement.style`. `auto` reads `window.matchMedia('(prefers-color-scheme: light)')` and applies the matching theme, updating live when the system preference changes. Choice persists in `localStorage` as `differ-theme` (default `paper`). The CSS `:root` block is a FOUC fallback only (it mirrors `paper`) — the JS `THEMES` object is the source of truth.
-
-Beyond colors, the token set carries **typography and layout** so the "reading" themes can be genuinely editorial rather than just recolored:
-
-- `--font-body` — the reading face (serif for the paper themes, the monospace stack for the code themes); used by the textareas, diff cells, merged text, headings, hero
-- `--font-ui` — chrome/labels (sans-serif for paper, mono for code)
-- `--logo` — wordmark color · `--radius` — component corner radius · `--on-accent` — text color on `--accent` backgrounds (so a near-white `--accent` like paper-dark's gets dark text, not white) · `--text-dim-strong` — a higher-contrast dim for small overline labels
-
-A post-`THEMES` backfill loop fills `--font-body`/`--font-ui`/`--logo`/`--radius`/`--on-accent`/`--text-dim-strong` for any theme that didn't define them (i.e. the code themes), so they render exactly as before. Adding a new theme still requires only a new `THEMES` entry; supply the editorial tokens if you want the serif/sans treatment.
-
-### Key design decisions
-
-**Why compromise.js over `Intl.Segmenter`?**
-`Intl.Segmenter` has a documented bug in Chrome and Firefox: abbreviations like "Mr.", "Dr.", "Jr." incorrectly trigger sentence breaks. compromise.js handles them correctly at ~132 KB gzip, no model download needed.
-
-**Why jsdiff over difflib.js?**
-Myers O(ND) is equivalent to LCS and produces identical output to Python's `difflib.SequenceMatcher`. The only `difflib.js` port was abandoned in 2012.
-
-**Why not modify input boxes during merge?**
-Input boxes are the source of truth. The merged result is assembled from the diff structure, keeping both originals available for re-comparison.
-
-**Why save merge state per mode instead of warning on switch?**
-No friction. Switching back restores decisions exactly. Text edits (which change segmentation) are the only thing that clears saved states.
-
-**Why encode merge state in the URL?**
-A shared link is a complete snapshot — the recipient sees the same diff and all decisions made so far. This enables async collaboration: share a half-merged doc, let someone finish it.
-
-**Why an editorial default theme but keep all the developer themes?**
-The original look ("terminal" — monospace, dark, dense) reads as "developer tool" and turns off the general audience this tool is also for. `paper` makes the default friendly while the code/monospace themes stay one click away (and untouched) for people who prefer them. The token system carries fonts/radii too, so "reading" themes are truly editorial rather than recolored.
-
-**Why keep the final-version panel as a sticky footer instead of an in-flow card?**
-The mockup ("Direction A") put the assembled result in a card below the diff. A sticky footer keeps the result in view while you scroll a long diff, and moving it would have touched the resize, edit-bar, and share-link plumbing for little gain. It got the editorial restyle ("your final version" + hint) in place.
+A single self-contained HTML file with two vendored dependencies (compromise.js for NLP tokenization, jsdiff for the LCS diff), fully offline, no build step. The diff pipeline (`splitText` → `computeDiff` → `renderDiff`), the per-chunk `mergeState` model, the shareable-URL encoding, the fuzzy-similarity function, the theme token system, and the PWA/service-worker layer are documented in **[docs/architecture.md](docs/architecture.md)**. The rationale behind the key choices (compromise over `Intl.Segmenter`, jsdiff over difflib, URL-encoded merge state, editorial default theme, …) lives in **[docs/DECISIONS.md](docs/DECISIONS.md)**. A skimmable present-state overview with diagrams is in **[docs/OVERVIEW.md](docs/OVERVIEW.md)**.
 
 ---
 
@@ -275,33 +161,28 @@ The mockup ("Direction A") put the assembled result in a card below the diff. A 
 differ/
 ├── index.html              # entire application (self-contained, no build step)
 ├── analytics.js            # event tracking wrapper (Aptabase)
-├── compromise.min.js       # NLP tokenizer (bundled)
-├── diff.min.js             # diff engine (bundled)
+├── compromise.min.js       # NLP tokenizer (vendored)
+├── diff.min.js             # diff engine (vendored)
+├── samples.js              # sample text pairs (always loaded; dropdown with ?samples)
 ├── manifest.json           # PWA manifest
 ├── sw.js                   # service worker (offline cache)
-├── icon.svg                # app icon (vector)
-├── icon-192.png            # app icon 192×192
-├── icon-512.png            # app icon 512×512
-├── icon-maskable-512.png   # app icon (maskable, Android adaptive)
-├── icon-maskable.svg       # maskable icon (vector)
-├── samples.js              # sample text pairs (always loaded; dropdown with ?samples)
+├── icon*.{svg,png}         # app / PWA / maskable icons
 ├── og-image.png            # Open Graph preview image (1200×630)
-├── robots.txt              # crawler directives
-├── sitemap.xml             # sitemap for search engines
+├── robots.txt · sitemap.xml # crawler directives + sitemap
 ├── CNAME                   # custom domain for GitHub Pages (differapp.com)
-├── extension/              # Chrome extension (Manifest V3)
-│   ├── manifest.json       # extension manifest
-│   ├── background.js       # service worker (context menus, tab orchestration)
-│   ├── content.js          # injected into differ to fill textareas
-│   ├── docx.js             # client-side .docx reader (ZIP + OOXML tracked changes) for Google Docs suggestions
-│   ├── popup.html/css/js   # extension popup UI
-│   ├── icons/              # extension icons (16, 48, 128px)
-│   ├── store/              # Chrome Web Store listing assets
-│   │   ├── description.txt # store listing copy (short + full)
-│   │   └── privacy-policy.md # privacy policy
-│   └── PUBLISHING.md       # step-by-step publishing guide
-├── todo.md                 # feature roadmap
-└── README.md               # this file
+├── ANALYTICS.md            # analytics providers + full event inventory
+├── SITE-PUBLISHING-PLAYBOOK.md  # reusable GitHub-Pages launch recipe
+├── PROGRESS.md             # live roadmap checklist + status (injected each session)
+├── CLAUDE.md               # repo conventions
+├── docs/                   # on-demand planning docs
+│   ├── PRD.md · ROADMAP.md · OVERVIEW.md · JOURNAL.md · DECISIONS.md
+│   ├── architecture.md     # engineering contract
+│   └── attic/todo.md       # retired original roadmap (kept for the record)
+└── extension/              # Chrome extension (Manifest V3)
+    ├── manifest.json · background.js · content.js · popup.{html,css,js}
+    ├── docx.js             # client-side .docx reader for Google Docs suggestions
+    ├── icons/ · store/     # extension icons + Chrome Web Store listing assets
+    └── PUBLISHING.md       # step-by-step publishing guide
 ```
 
 Open `index.html` directly in a browser. No build step, no server needed. A "try a sample" button on the empty state loads a generic demo. Add `?samples` to the URL to show a dropdown with additional sample text pairs for testing. For PWA install (Add to Home Screen), serve via `localhost` or HTTPS.
@@ -310,8 +191,9 @@ Open `index.html` directly in a browser. No build step, no server needed. A "try
 
 ## Roadmap
 
-See [todo.md](todo.md). Key remaining items:
+The live checklist is [`PROGRESS.md`](PROGRESS.md); plan prose for unshipped work is in [`docs/ROADMAP.md`](docs/ROADMAP.md). Key remaining items:
 
+- URL payload compression (fit ~3× more text per share link)
 - Native iOS app with Share Sheet integration
 - App naming — "differ" didn't resonate with a non-technical tester; needs broader input
-- Monetization — tip jar (Buy Me a Coffee / Ko-fi) and optional pro features (file upload, export); see `todo.md` for the full plan
+- Monetization — tip jar and optional one-time pro features (file upload, export)
