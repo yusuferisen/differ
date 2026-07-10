@@ -114,3 +114,20 @@ encoding, similarity, theme system) was extracted to `docs/architecture.md` and
 its "Key design decisions" to this file. The README was slimmed to a human front
 door (what it is, features, stack, how to run) with pointers, to keep a single
 source of truth for the engineering contract.
+
+### Monorepo layout + Actions Pages deploy (2026-07-10)
+
+**Chose:** fold the static site into a `web/` surface folder (extension stays its
+own `extension/` surface), give each surface its own `CLAUDE.md` build/run/test
+contract, keep root minimal, and leave room for future `ios/` / `server/` /
+`packages/` surfaces without restructuring. **Consequence:** GitHub Pages could no
+longer serve from `main`/root (branch-serve only reads root or `/docs`, and
+`/docs` is the planning-docs folder), so deploy switched to a **GitHub Actions**
+workflow (`.github/workflows/pages.yml`) that publishes `web/`; the Pages source
+was flipped from `branch` to `workflow` (`build_type=workflow`). **Trade-off
+accepted:** a ~1-min CI build per push replaces instant branch-serve; there is
+still no test gate. **Preserved:** custom domain + HTTPS, via `web/CNAME` carried
+in the artifact (contents serve at the domain root, so all asset paths stay
+relative). **Alternatives rejected:** keeping the site at root (leaves root
+cluttered, blocks the surface model); serving from `/docs` (collides with the
+planning docs).

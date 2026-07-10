@@ -17,19 +17,42 @@
 
 ## Overview
 
-`differ` is a **no-build static site** — the repository *is* the deployed site. There is no `.github/workflows/`, no bundler, no `dist/` output. Source files live at the repo root and are served verbatim by GitHub Pages. Third-party libraries are **vendored** into the repo as minified files (`compromise.min.js`, `diff.min.js`) rather than installed from a package manager, which is what makes the "fully offline" PWA story work.
+`differ` is a **no-build static site** — no bundler, no `dist/` output. Third-party
+libraries are **vendored** as minified files (`compromise.min.js`, `diff.min.js`)
+rather than installed from a package manager, which is what makes the "fully
+offline" PWA story work.
 
-The practical consequence: **a push to `main` is a deploy.** Whatever lands on the default branch is live within roughly a minute, with no intermediate build step to break.
+The site lives in the **`web/`** surface folder (monorepo layout) and is published
+to GitHub Pages by a **GitHub Actions** workflow (`.github/workflows/pages.yml`)
+that uploads `web/` as the Pages artifact. The practical consequence: **a push to
+`main` touching `web/**` is a deploy** — live within roughly a minute after the
+Actions build. (Earlier this site deployed straight from `main`/root with no
+workflow; that simpler "branch-root, no CI" model — described below — still works
+for a site whose files sit at the repo root, but folding the site into a subfolder
+requires the Actions path since Pages branch-serve only reads root or `/docs`.)
 
-This document separates the launch into independent layers. Hosting + domain + HTTPS are the mandatory core; analytics, SEO, and PWA are independent add-ons that can be adopted piecemeal.
+This document separates the launch into independent layers. Hosting + domain +
+HTTPS are the mandatory core; analytics, SEO, and PWA are independent add-ons that
+can be adopted piecemeal.
 
-## Hosting Model: GitHub Pages from Branch Root
+## Hosting Model: GitHub Pages via Actions (publishing `web/`)
 
 - **Repository:** `git@github.com:yusuferisen/differ.git`
-- **Pages source:** Settings → Pages → **Deploy from a branch**, branch `main`, folder `/ (root)`.
-- **No CI/CD:** the absence of `.github/workflows/` is intentional. GitHub Pages serves the raw files. This only works because the site needs no compilation — HTML + vendored JS.
+- **Pages source:** Settings → Pages → **GitHub Actions** (`build_type: workflow`).
+- **Workflow:** `.github/workflows/pages.yml` — on a push touching `web/**` (or
+  manual dispatch) it runs `actions/upload-pages-artifact` with `path: web` then
+  `actions/deploy-pages`. The artifact's contents (i.e. `web/`) are served at the
+  domain root, so **every asset path in the site must stay relative** and
+  `web/CNAME` must live inside `web/` to bind the custom domain.
+- **Still no test gate:** the workflow builds/uploads but runs no tests — a broken
+  commit deploys just the same. Verify in a browser before pushing.
 
-If a future site *does* need a build (framework, bundler, Tailwind compile, etc.), the equivalent would be either a GitHub Actions workflow that publishes to Pages, or pointing Pages at a `/docs` folder containing pre-built output. `differ` deliberately avoids both.
+**Simpler alternative — branch-root, no CI** (what this repo used before the
+monorepo fold): Settings → Pages → **Deploy from a branch**, `main` / `/ (root)`,
+with the site's files at the repo root and no `.github/workflows/`. GitHub serves
+the raw files; a push is instantly a deploy. This works only while the site sits
+at the root (or a `/docs` folder) — the moment you move it into an arbitrary
+subfolder like `web/`, you need the Actions path above.
 
 ## Custom Domain & DNS
 
@@ -171,9 +194,11 @@ Files that exist specifically to support hosting/publishing/discoverability:
 
 ## New-Repo Checklist
 
-1. Place static files at repo root (or use a `/docs` folder if you prefer that Pages option).
-2. Add a `CNAME` file containing the new bare domain.
-3. Settings → Pages → deploy from `main` / root.
+1. Place static files at the repo root **or** in a surface folder like `web/`.
+2. Add a `CNAME` file (bare domain) beside them — in the same dir that gets served.
+3. Choose the Pages source: **branch `main` / root** (files at root, no CI) **or**
+   **GitHub Actions** with a workflow that uploads that folder (required if the
+   files live in a subfolder — see the Hosting Model section for both).
 4. Namecheap DNS: four apex `A` records (verify current GitHub IPs), `www` `CNAME` → `<user>.github.io`, and the `TXT` verification record from GitHub.
 5. Wait for the Pages DNS check to pass → tick **Enforce HTTPS**.
 6. Create a **new Cloudflare beacon token** and a **new Aptabase app key**; drop the beacon `<script>` before `</body>` and wire `analytics.js` / `analytics.init()`.
@@ -188,7 +213,7 @@ Files that exist specifically to support hosting/publishing/discoverability:
 - **Service worker cache version.** Forgetting to bump `CACHE` in `sw.js` ships stale assets to returning visitors. The network-first HTML rule mitigates this for the page shell but not for JS/CSS/icons.
 - **Absolute URLs for OG/canonical/sitemap.** Social scrapers and search engines need fully-qualified `https://…` URLs, not relative paths.
 - **`CNAME` file stability.** Early git history shows churn (create/delete/merge-conflict) on this file; treat it as set-once to avoid breaking the domain binding.
-- **Push = deploy.** With no CI gate, a broken commit on `main` is immediately live. There's no build to catch errors.
+- **Push = deploy, and there's still no test gate.** The Actions workflow builds/uploads but runs no tests, so a broken commit on `main` deploys just the same — verify in a browser first. (Same hazard as the old branch-root model, minus the ~1-min build delay.)
 
 ## Open Questions
 

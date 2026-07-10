@@ -7,16 +7,22 @@
 
 ## Shape
 
-A single self-contained web app plus an optional Chrome extension. No build step,
-no server, no runtime package install — the repository *is* the deployed site.
+A monorepo with one folder per surface: a self-contained web app (`web/`) plus an
+optional Chrome extension (`extension/`). No build step, no server, no runtime
+package install — `web/` is served as static files.
 
-- **Web app** — `index.html` is the entire application (markup + CSS + all JS
-  inline). Two dependencies are **vendored** as minified files so the app runs
-  fully offline: `compromise.min.js` (NLP tokenizer) and `diff.min.js` (jsdiff).
-  `samples.js` and `analytics.js` are the only other loaded scripts.
+- **Web app** (`web/`) — `web/index.html` is the entire application (markup + CSS +
+  all JS inline). Two dependencies are **vendored** as minified files so the app
+  runs fully offline: `compromise.min.js` (NLP tokenizer) and `diff.min.js`
+  (jsdiff). `samples.js` and `analytics.js` are the only other loaded scripts.
+  Published to GitHub Pages by `.github/workflows/pages.yml`; the artifact root is
+  `web/`, so its contents are served at the domain root and **all asset paths are
+  relative**.
 - **Chrome extension** (`extension/`) — Manifest V3; captures text from any page
-  and hands it to the web app. Independent of the app's internals (fills the
-  textareas via injected content script; never modifies `index.html`).
+  and hands it to the web app. Independent of the app's internals — fills the
+  textareas via injected content script, never modifies `web/index.html`, and
+  reaches the app over the absolute production URL, so the repo layout doesn't
+  affect it.
 
 ## Dependencies
 
@@ -139,6 +145,16 @@ backgrounds), `--text-dim-strong`. A post-`THEMES` backfill loop fills these for
 any theme that didn't define them (the code/monospace themes), so they render
 exactly as before. Adding a theme needs only a new `THEMES` entry.
 
+## Deploy
+
+`web/` is published to GitHub Pages by `.github/workflows/pages.yml` on any push
+that touches `web/**` (or manual dispatch): it uploads `web/` as the Pages
+artifact and deploys it. The artifact's contents serve at the domain root, so
+every asset path in the site must stay relative. `web/CNAME` travels in the
+artifact and binds the custom domain (differapp.com, HTTPS enforced). The Pages
+source is "GitHub Actions" (not branch-serve). There is no test gate — the push
+ships the site — so the manual browser check is the gate.
+
 ## PWA / offline
 
 `manifest.json` declares the installable app; `sw.js` is the service worker.
@@ -165,7 +181,7 @@ vs. all-suggestions-accepted.
 ## Testing strategy
 
 No automated suite and no build step. Verification is manual: exercise the
-diff → merge → copy/share flows in a browser after any change to `index.html`,
+diff → merge → copy/share flows in a browser after any change to `web/index.html`,
 and load `extension/` unpacked at `chrome://extensions` for extension changes.
-Because push-to-`main` is the deploy (no CI gate), the browser check *is* the
-gate — run it before pushing.
+The Actions deploy builds but runs no tests, so a push to `main` still ships
+whatever it ships — the browser check *is* the gate; run it before pushing.

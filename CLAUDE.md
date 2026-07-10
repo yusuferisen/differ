@@ -1,32 +1,37 @@
 # differ — repo conventions
 
 Browser-based text review & merge tool ([differapp.com](https://differapp.com)):
-a no-build static site plus a Chrome extension. Auto-loaded every session — keep
-this lean and durable. No status or history here (that lives in `PROGRESS.md` /
-`docs/JOURNAL.md`).
+a no-build static site plus a Chrome extension, laid out as a **monorepo** by
+surface. Auto-loaded every session — keep this lean and durable. No status or
+history here (that lives in `PROGRESS.md` / `docs/JOURNAL.md`).
 
-## Layout
+## Monorepo layout
 
-- `index.html` — **the entire web app** (markup + CSS + all JS inline). This is
-  where nearly all feature work happens.
-- `analytics.js` · `samples.js` — the only other loaded scripts.
-- `compromise.min.js` · `diff.min.js` — **vendored** deps (NLP tokenizer + jsdiff).
-  No CDN, no package manager — the offline PWA depends on them being local.
-- `manifest.json` · `sw.js` · `icon*` — PWA layer.
-- `extension/` — Chrome extension (Manifest V3), independent of the app internals.
-- `docs/` — on-demand planning docs (see the router in `PROGRESS.md`).
+Each surface is its own folder with its own `CLAUDE.md` (build/run/test contract),
+which lazy-loads when a session works in that folder. Root holds only the
+repo-wide files.
+
+- `web/` — the static site (the whole web app; `web/index.html` is where nearly
+  all feature work happens). Published to GitHub Pages by Actions. See
+  `web/CLAUDE.md`.
+- `extension/` — Chrome extension (Manifest V3), decoupled from the site (talks to
+  it over the absolute production URL). See `extension/CLAUDE.md`.
+- `docs/` — on-demand product-wide planning docs (router in `PROGRESS.md`).
+- `.github/workflows/pages.yml` — deploys `web/` to Pages.
+- Root files: `README.md`, `PROGRESS.md`, this `CLAUDE.md`, `.gitignore`.
+- **Future surfaces slot in beside these** — `ios/` (an app + `packages/<App>Kit`
+  for TCA domain logic), `server/`, `scripts/` — without restructuring.
 
 ## How this repo works
 
-- **No build step, no server, no tests.** Open `index.html` in a browser to run.
-- **Push to `main` is the deploy.** GitHub Pages serves the repo verbatim (main /
-  root, no CI). A broken commit on `main` is live within ~a minute — verify in a
-  browser before pushing. The browser check *is* the gate.
-- **Bump `CACHE` in `sw.js`** whenever cached assets change, or returning visitors
-  get stale JS/CSS/icons.
-- **Analytics keys are site-specific** — the Cloudflare beacon token and Aptabase
-  app key belong to this site; a fork provisions its own (`SITE-PUBLISHING-PLAYBOOK.md`).
-- **No secrets in the repo.** Nothing here needs API keys at runtime.
+- **No build step and no automated tests** on the current surfaces. Each surface's
+  `CLAUDE.md` carries its run/verify contract; verification is manual (browser for
+  `web/`, unpacked load for `extension/`).
+- **Deploy is via GitHub Actions**, not branch-serve: a push touching `web/**`
+  triggers `pages.yml` (~1-min build) → live at differapp.com. There's still no
+  test gate, so **verify `web/` in a browser before pushing** — the push ships it.
+- **No secrets in the repo.** Nothing here needs API keys at runtime. (Analytics
+  keys are baked into the site and are site-specific — a fork provisions its own.)
 
 ## Docs (on-demand — read by path, not auto-loaded)
 

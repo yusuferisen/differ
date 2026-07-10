@@ -16,7 +16,7 @@ Also shipped as a Chrome extension for capturing text from any page.
 
 ```mermaid
 flowchart TD
-  subgraph Browser["index.html — single self-contained app (no build)"]
+  subgraph Browser["web/index.html — single self-contained app (no build)"]
     TA[Two textareas: original / modified] --> C{compare debounced 180ms}
     C --> SP["splitText(text, mode)"]
     SP --> CD["computeDiff(segs1, segs2, fuzzy)"]
@@ -34,8 +34,8 @@ flowchart TD
   APT[analytics.js → Aptabase] -.events.-> MS
 ```
 
-The whole application is `index.html` (markup + CSS + inline JS) with two vendored
-dependencies (`compromise.min.js`, `diff.min.js`) so it runs fully offline. The
+The whole application is `web/index.html` (markup + CSS + inline JS) with two
+vendored dependencies (`compromise.min.js`, `diff.min.js`) so it runs fully offline. The
 Chrome extension in `extension/` captures text elsewhere and fills the app's
 textareas; it's independent of the app's internals.
 
@@ -105,8 +105,10 @@ serializes to the URL hash for sharing.
 
 ## Surfaces & hosting
 
-- **Web app** — repo root, served verbatim by GitHub Pages (main / root, no CI);
-  a push to `main` is a deploy. Custom domain differapp.com over HTTPS.
+- **Web app** — `web/` surface, published to GitHub Pages by
+  `.github/workflows/pages.yml` (a push touching `web/**` → ~1-min Actions build →
+  live). `web/` contents serve at the domain root; custom domain differapp.com
+  over HTTPS, bound by `web/CNAME`.
 - **Chrome extension** — `extension/` (Manifest V3); Web Store listing assets in
   `extension/store/`, publishing steps in `extension/PUBLISHING.md`.
 - **Analytics** — cookieless Cloudflare (aggregate) + Aptabase (custom events);

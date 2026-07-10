@@ -21,8 +21,8 @@
 - **Journal (past — append-only per-phase narrative):** `docs/JOURNAL.md`
 - **Architecture (engineering contract):** `docs/architecture.md`
 - **Decisions log:** `docs/DECISIONS.md`
-- **Analytics reference:** `ANALYTICS.md` · **Publishing playbook:** `SITE-PUBLISHING-PLAYBOOK.md`
-- **Surfaces:** web app at repo root (`index.html`, no build) · Chrome extension in `extension/` (`extension/PUBLISHING.md` = Web Store guide)
+- **Analytics reference:** `web/ANALYTICS.md` · **Publishing playbook:** `web/SITE-PUBLISHING-PLAYBOOK.md`
+- **Surfaces (monorepo):** `web/` — static site, no build (`web/CLAUDE.md`) · `extension/` — Chrome extension (`extension/CLAUDE.md`, `extension/PUBLISHING.md` = Web Store guide). Deploy: `.github/workflows/pages.yml` publishes `web/` to Pages.
 
 ---
 
@@ -86,6 +86,9 @@
   - [ ] 11.2 Pro one-time unlock (LemonSqueezy/Gumroad license, client-side): file upload / export / history / batch
 - [ ] **Phase 12 — Native iOS app** — Share-Sheet capture is the killer feature; NLP layer is the architecture challenge (port / WKWebView bridge / line-mode MVP). Not a single-session task.
 - [ ] **Phase 13 — Extension: reliable "has open suggestions" detection** without downloading (currently shows on any doc, reports "no suggestions" after fetch) — no cheap DOM signal (canvas-rendered)
+- [x] **Phase 14 — Monorepo layout + Actions Pages deploy** (post-launch infra)
+  - [x] 14.1 Fold the site into `web/`, extension stays its own surface; per-surface `CLAUDE.md`; minimal root
+  - [x] 14.2 GitHub Actions Pages deploy of `web/` (replaces branch-root serving; custom domain + HTTPS preserved via `web/CNAME`)
 
 <!-- Deferred / won't-do (kept for the record — see docs/ROADMAP.md § Out of scope):
      semantic change classification, Direction C (unified inline / Track-Changes popovers), ads, subscriptions, gating existing features. -->
@@ -94,10 +97,10 @@
 
 ## Current Status
 
-- **Current phase / sub-phase:** post-launch maintenance — v1 public launch reached (Phases 1–8)
-- **State:** milestone-reached; open backlog is Phases 9–13, none started
-- **Last completed:** 4.4 wizard "remove it / leave it out" cards — commit `c5b2263`
-- **Build:** n/a (no build step — the repo *is* the deployed site) · **Tests:** n/a (no automated suite) · **Simulator-verified:** n/a (web)
+- **Current phase / sub-phase:** post-launch maintenance — v1 public launch reached (Phases 1–8); repo converted to a monorepo (Phase 14)
+- **State:** milestone-reached; open product backlog is Phases 9–13, none started
+- **Last completed:** 14.2 — monorepo fold + Actions Pages deploy of `web/`
+- **Build:** n/a (no build step) · **Tests:** n/a (no automated suite; manual browser check per surface) · **Deploy:** GitHub Actions (`pages.yml`) → differapp.com
 
 ---
 
@@ -112,6 +115,7 @@
 - **PRD placeholder** — no product-intent doc existed; chose a placeholder pointing at README/PROGRESS rather than fabricating intent → DECISIONS.md § PRD is a placeholder (adopt)
 - **todo.md retired to `docs/attic/`** — content split into this checklist + ROADMAP prose → DECISIONS.md § todo.md split by /adopt
 - **README engineering deep-dive extracted** to `docs/architecture.md` + `docs/DECISIONS.md`; README slimmed to front-door + pointers → DECISIONS.md § README extraction (adopt)
+- **Monorepo fold** — site → `web/`, deploy switched to GitHub Actions (from branch-root) → DECISIONS.md § Monorepo layout + Actions Pages deploy
 
 ---
 
@@ -123,10 +127,10 @@
 
 ## Assumptions & Risks
 
-- **No CI gate — push to `main` is the deploy.** A broken commit on `main` is live within ~a minute; there's no build to catch it. Sanity-check `index.html` in a browser before pushing.
+- **Deploy is a push to `main` via Actions.** A push touching `web/**` triggers `pages.yml` (~1-min build) and goes live; there's still no test gate. Sanity-check `web/index.html` in a browser before pushing. The Pages source must stay set to "GitHub Actions" (not branch).
 - **Service-worker cache version.** Bump `CACHE` in `sw.js` whenever cached assets change, or returning visitors silently get stale JS/CSS/icons (network-first HTML mitigates only the shell).
-- **Analytics keys are differ-specific.** The Cloudflare beacon token and Aptabase app key belong to this site; a fork must provision its own (see SITE-PUBLISHING-PLAYBOOK.md).
-- **No automated tests.** Regression safety is manual — verify diff/merge/share flows by hand after changes to `index.html`.
+- **Analytics keys are differ-specific.** The Cloudflare beacon token and Aptabase app key belong to this site; a fork must provision its own (see `web/SITE-PUBLISHING-PLAYBOOK.md`).
+- **No automated tests.** Regression safety is manual — verify diff/merge/share flows by hand after changes to `web/index.html`; load `extension/` unpacked for extension changes.
 
 ---
 

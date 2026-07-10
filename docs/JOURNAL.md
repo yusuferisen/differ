@@ -148,3 +148,24 @@ with a 🏁 public-launch milestone), `docs/ROADMAP.md` (unshipped plan prose),
 engineering deep-dive), this JOURNAL, and a `docs/PRD.md` placeholder. Retired
 `todo.md` to `docs/attic/todo.md`. Slimmed the README to a front door with
 pointers. Added a lean root `CLAUDE.md`. Doctor: clean; parser: green.
+
+## 2026-07-10 — Monorepo fold + Actions-based Pages deploy (Phase 14)
+
+Converted the flat repo into a monorepo by surface. `git mv`'d the entire static
+site (index.html + all assets + CNAME + ANALYTICS.md + SITE-PUBLISHING-PLAYBOOK.md)
+into `web/`; the Chrome extension stayed its own `extension/` surface. Added a
+build/run/test `CLAUDE.md` to each surface and rewrote the root `CLAUDE.md` as a
+repo-wide monorepo map. Root is now minimal (README, PROGRESS, CLAUDE, docs/,
+web/, extension/, .github/).
+
+Deploy: since Pages branch-serve only reads root or `/docs` (taken), switched from
+`main`/root serving to a GitHub Actions workflow (`.github/workflows/pages.yml`,
+`upload-pages-artifact path: web` → `deploy-pages`) and flipped the Pages source
+to `build_type=workflow` via `gh`. Custom domain + HTTPS preserved by `web/CNAME`
+in the artifact; `web/` contents serve at the domain root so no asset paths
+changed (verified index.html/sw.js/manifest use only relative paths). The
+extension was unaffected — it reaches the site over the absolute production URL.
+Updated README / OVERVIEW / architecture / the publishing playbook to the new
+layout and deploy model. Gotcha to remember: the flip to `workflow` had to happen
+before pushing the rootless tree, or a legacy branch-root build would have
+deployed a 404 root.

@@ -25,7 +25,7 @@ All processing runs entirely in the browser. Text never leaves your device.
 
 ## Usage
 
-Visit **[differapp.com](https://differapp.com)** — or open `index.html` locally.
+Visit **[differapp.com](https://differapp.com)** — or open `web/index.html` locally.
 
 Paste original text in the left box, modified text in the right. The diff updates live as you type. No compare button.
 
@@ -157,35 +157,34 @@ A single self-contained HTML file with two vendored dependencies (compromise.js 
 
 ## Development
 
+A monorepo, one folder per surface. Root holds only repo-wide files; each surface
+carries its own `CLAUDE.md` build/run/test contract.
+
 ```
 differ/
-├── index.html              # entire application (self-contained, no build step)
-├── analytics.js            # event tracking wrapper (Aptabase)
-├── compromise.min.js       # NLP tokenizer (vendored)
-├── diff.min.js             # diff engine (vendored)
-├── samples.js              # sample text pairs (always loaded; dropdown with ?samples)
-├── manifest.json           # PWA manifest
-├── sw.js                   # service worker (offline cache)
-├── icon*.{svg,png}         # app / PWA / maskable icons
-├── og-image.png            # Open Graph preview image (1200×630)
-├── robots.txt · sitemap.xml # crawler directives + sitemap
-├── CNAME                   # custom domain for GitHub Pages (differapp.com)
-├── ANALYTICS.md            # analytics providers + full event inventory
-├── SITE-PUBLISHING-PLAYBOOK.md  # reusable GitHub-Pages launch recipe
-├── PROGRESS.md             # live roadmap checklist + status (injected each session)
-├── CLAUDE.md               # repo conventions
-├── docs/                   # on-demand planning docs
-│   ├── PRD.md · ROADMAP.md · OVERVIEW.md · JOURNAL.md · DECISIONS.md
-│   ├── architecture.md     # engineering contract
-│   └── attic/todo.md       # retired original roadmap (kept for the record)
-└── extension/              # Chrome extension (Manifest V3)
-    ├── manifest.json · background.js · content.js · popup.{html,css,js}
-    ├── docx.js             # client-side .docx reader for Google Docs suggestions
-    ├── icons/ · store/     # extension icons + Chrome Web Store listing assets
-    └── PUBLISHING.md       # step-by-step publishing guide
+├── README.md · PROGRESS.md · CLAUDE.md   # front door · live checklist+status · repo conventions
+├── .github/workflows/pages.yml           # deploys web/ to GitHub Pages
+├── web/                                   # the static site (a surface)
+│   ├── index.html            # entire application (self-contained, no build step)
+│   ├── analytics.js · samples.js
+│   ├── compromise.min.js · diff.min.js    # vendored deps (NLP tokenizer + jsdiff)
+│   ├── manifest.json · sw.js · icon*.{svg,png} · og-image.png   # PWA + SEO assets
+│   ├── robots.txt · sitemap.xml · CNAME   # crawler + custom-domain files
+│   ├── ANALYTICS.md · SITE-PUBLISHING-PLAYBOOK.md
+│   └── CLAUDE.md             # web build/run/deploy contract
+├── extension/                             # Chrome extension, MV3 (a surface)
+│   ├── manifest.json · background.js · content.js · popup.{html,css,js}
+│   ├── docx.js              # client-side .docx reader for Google Docs suggestions
+│   ├── icons/ · store/      # extension icons + Chrome Web Store listing assets
+│   ├── PUBLISHING.md        # step-by-step publishing guide
+│   └── CLAUDE.md            # extension build/run/test contract
+└── docs/                                  # on-demand planning docs
+    ├── PRD.md · ROADMAP.md · OVERVIEW.md · JOURNAL.md · DECISIONS.md
+    ├── architecture.md      # engineering contract
+    └── attic/todo.md        # retired original roadmap (kept for the record)
 ```
 
-Open `index.html` directly in a browser. No build step, no server needed. A "try a sample" button on the empty state loads a generic demo. Add `?samples` to the URL to show a dropdown with additional sample text pairs for testing. For PWA install (Add to Home Screen), serve via `localhost` or HTTPS.
+Open `web/index.html` directly in a browser to run — no build step, no server needed. A "try a sample" button on the empty state loads a generic demo; add `?samples` to the URL for a dropdown of additional sample pairs. For PWA install (Add to Home Screen), serve `web/` via `localhost` or HTTPS. The site deploys to [differapp.com](https://differapp.com) automatically when a push to `main` touches `web/**` (GitHub Actions, `.github/workflows/pages.yml`).
 
 ---
 
